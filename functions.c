@@ -2,7 +2,7 @@
  * @Author: jRimbault
  * @Date:   2017-01-08 22:00:10
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-08 22:17:22
+ * @Last Modified time: 2017-01-08 22:43:08
  * @Description:
  */
 
@@ -182,6 +182,7 @@ void decode_loop(char* buffer_input,
 /*
  * Opens the input and output files, creates buffers,
  * triggers the encode and decode loops
+ * @TODO: add the parsing of the key file in there
  */
 void file_opener_and_writer(char** argv, int progress) {
 	FILE* input;
@@ -206,20 +207,21 @@ void file_opener_and_writer(char** argv, int progress) {
 			filelen = ftell(input);
 			rewind(input);
 			buffer_input = (char *)malloc((filelen + 1)*sizeof(char));
-			buffer_output = (char *)malloc((filelen + 1)*sizeof(char)*2);
 			fread(buffer_input, filelen, 1, input);
 			/*
 			 * Either encrypt or decrypt
 			 * argv[1] first argument
 			 */
 			if (!strcmp(argv[1], "encrypt")) {
+				buffer_output = (char *)malloc((filelen + 1)*sizeof(char)*2);
 				encode_loop(buffer_input, buffer_output, filelen, progress);
 				fwrite(buffer_output, sizeof(char), filelen * 2, output);
 			} else if (!strcmp(argv[1], "decrypt")) {
-				decode_loop(buffer_input, buffer_output, filelen/2, progress);
+				buffer_output = (char *)malloc((filelen + 1)*sizeof(char)/2);
+				decode_loop(buffer_input, buffer_output, filelen / 2, progress);
 				fwrite(buffer_output, sizeof(char), filelen / 2, output);
 			} else {
-				printf("Invalid operation. Either 'encrypt' or 'decrypt'.\n");
+				printf("Invalid operation. Either 'encrypt' or 'decrypt'.\n\n");
 				help();
 			}
 
@@ -232,8 +234,11 @@ void file_opener_and_writer(char** argv, int progress) {
 			 * Close output file
 			 */
 			fclose(output);
+			if (progress) {
+				printf("Done!\n");
+			}
 		} else {
-			printf("Wrong or no output file.\n");
+			printf("Wrong output file '%s'. Check if you have write access.\n\n", argv[3]);
 			help();
 		}
 		/*
@@ -241,10 +246,7 @@ void file_opener_and_writer(char** argv, int progress) {
 		 */
 		fclose(input);
 	} else {
-		printf("Input file not found or not accessible.\n");
+		printf("Input file '%s' not found or not accessible.\n\n", argv[2]);
 		help();
-	}
-	if (progress) {
-		printf("Done!\n");
 	}
 }
