@@ -2,7 +2,7 @@
  * @Author: jRimbault
  * @Date:   2017-01-08 22:00:10
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-10 18:34:49
+ * @Last Modified time: 2017-01-10 20:51:55
  * @Description:
  */
 
@@ -24,7 +24,6 @@
 #define NUM_THREADS 4
 
 pthread_t loops[NUM_THREADS];
-char* buffer_output;
 
 typedef struct arg_struct {
 	char* buffer_input;
@@ -90,7 +89,7 @@ void* encode_loop(void* arg) {
 	long begin = args -> begin;
 	long end = args -> end;
 	char* buffer_input = args -> buffer_input;
-	buffer_output = args -> buffer_output;
+	char* buffer_output = args -> buffer_output;
 	int progress = args -> progress;
 	int number_of_threads_arg = args -> number_of_threads_arg;
 	pthread_t id = pthread_self();
@@ -115,7 +114,7 @@ void* decode_loop(void* arg) {
 	long begin = args -> begin;
 	long end = args -> end;
 	char* buffer_input = args -> buffer_input;
-	buffer_output = args -> buffer_output;
+	char* buffer_output = args -> buffer_output;
 	int progress = args -> progress;
 	int number_of_threads_arg = args -> number_of_threads_arg;
 	pthread_t id = pthread_self();
@@ -146,7 +145,8 @@ void* decode_loop(void* arg) {
 void file_opener_and_writer(char** argv, int progress, int number_of_threads_arg) {
 	FILE* input;
 	FILE* output;
-	char *buffer_input;
+	char* buffer_input;
+	char* buffer_output;
 	long filelen;
 	int err;
 	int i;
