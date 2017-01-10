@@ -2,7 +2,7 @@
  * @Author: jRimbault
  * @Date:   2017-01-08 21:59:30
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-09 14:17:39
+ * @Last Modified time: 2017-01-10 16:32:16
  * @Description: 
  */
 
@@ -30,8 +30,8 @@ char quartet_1(char);
  */
 char quartet_2(char);
 
-void encode_loop(char*, char*, long, int);
-void decode_loop(char*, char*, long, int);
+void* encode_loop(void*);
+void* decode_loop(void*);
 
 /*
  * Opens the input and output files, creates buffers,
