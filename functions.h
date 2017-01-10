@@ -2,7 +2,7 @@
  * @Author: jRimbault
  * @Date:   2017-01-08 21:59:30
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-08 22:15:01
+ * @Last Modified time: 2017-01-09 14:17:39
  * @Description: 
  */
 
@@ -19,16 +19,6 @@ void help();
  * on small files, 5 to 20% on large files
  */
 void progress_indicator(long, long);
-
-/*
- * Receives a half byte (4bits) and returns the corresponding encoded byte
- */
-char encode_character_switch(char);
-
-/*
- * Receives an encoded byte and returns the original byte
- */
-char decode_character_switch(char);
 
 /*
  * Left bitshift

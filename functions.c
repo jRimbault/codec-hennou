@@ -2,13 +2,31 @@
  * @Author: jRimbault
  * @Date:   2017-01-08 22:00:10
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-08 22:43:08
+ * @Last Modified time: 2017-01-10 07:27:05
  * @Description:
  */
 
+#ifndef HEADER
+#define HEADER
 #include "header.h"
+#endif
 
-char matrice[4] = {0b10001111, 0b11000111, 0b10100100, 0b10010010};
+#ifndef FUNCTIONS
+#define FUNCTIONS
+#include "functions.h"
+#endif
+
+#ifndef SWITCHES
+#define SWITCHES
+#include "switches.h"
+#endif
+
+typedef struct arg_struct {
+	char* input;
+	char* output; 
+	long end;
+	int progress;
+} arg_struct;
 
 /*
  * Help triggered if asked or if wrong arguments were given.
@@ -42,97 +60,6 @@ void progress_indicator(long i, long filelen) {
 	if ((i % filelen) == 0) {
 		printf(" %ld%%\r", i/filelen);
 		fflush(stdout);
-	}
-}
-
-/*
- * Receives a half byte (4bits) and returns the corresponding encoded byte
- */
-char encode_character_switch(char c) {
-	switch(c) {
-		case 0b0000: //  0
-			return 0;
-		case 0b0001: //  1
-			return matrice[3];
-		case 0b0010: //  2
-			return matrice[2];
-		case 0b0011: //  3
-			return (matrice[2] ^ matrice[3]);
-		case 0b0100: //  4
-			return matrice[1];
-		case 0b0101: //  5
-			return (matrice[1] ^ matrice[3]);
-		case 0b0110: //  6
-			return (matrice[1] ^ matrice[2]);
-		case 0b0111: //  7
-			return (matrice[1] ^ matrice[2] ^ matrice[3]);
-		case 0b1000: //  8
-			return matrice[0];
-		case 0b1001: //  9
-			return (matrice[0] ^ matrice[3]);
-		case 0b1010: // 10
-			return (matrice[0] ^ matrice[2]);
-		case 0b1011: // 11
-			return (matrice[0] ^ matrice[2] ^ matrice[3]);
-		case 0b1100: // 12
-			return (matrice[0] ^ matrice[1]);
-		case 0b1101: // 13
-			return (matrice[0] ^ matrice[1] ^ matrice[3]);
-		case 0b1110: // 14
-			return (matrice[0] ^ matrice[1] ^ matrice[2]);
-		case 0b1111: // 15
-			return (matrice[0] ^ matrice[1] ^ matrice[2] ^ matrice[3]);
-		default:
-			/* 
-			 * Shouldn't ever be triggered since all
-			 * possible combinations of 4bits have been made. 0-15
-			 */
-			return 0;
-	}
-}
-
-/*
- * Receives an encoded byte and returns the original byte
- */
-char decode_character_switch(char c) {
-	if(c == 0) {
-		return 0;
-	} else if (c == matrice[3]) {
-		return 0b0001;
-	} else if (c == matrice[2]) {
-		return 0b0010;
-	} else if (c == (matrice[2] ^ matrice[3])) {
-		return 0b0011;
-	} else if (c == matrice[1]) {
-		return 0b0100;
-	} else if (c == (matrice[1] ^ matrice[3])) {
-		return 0b0101;
-	} else if (c == (matrice[1] ^ matrice[2])) {
-		return 0b0110;
-	} else if (c == (matrice[1] ^ matrice[2] ^ matrice[3])) {
-		return 0b0111;
-	} else if (c == matrice[0]) {
-		return 0b1000;
-	} else if (c == (matrice[0] ^ matrice[3])) {
-		return 0b1001;
-	} else if (c == (matrice[0] ^ matrice[2])) {
-		return 0b1010;
-	} else if (c == (matrice[0] ^ matrice[2] ^ matrice[3])) {
-		return 0b1011;
-	} else if (c == (matrice[0] ^ matrice[1])) {
-		return 0b1100;
-	} else if (c == (matrice[0] ^ matrice[1] ^ matrice[3])) {
-		return 0b1101;
-	} else if (c == (matrice[0] ^ matrice[1] ^ matrice[2])) {
-		return 0b1110;
-	} else if (c == (matrice[0] ^ matrice[1] ^ matrice[2] ^ matrice[3])) {
-		return 0b1111;
-	} else {
-		/* 
-		 * Shouldn't ever be triggered since all
-		 * possible combinations of 8bits have been made. 0-255
-		 */
-		return 0;
 	}
 }
 
@@ -183,6 +110,7 @@ void decode_loop(char* buffer_input,
  * Opens the input and output files, creates buffers,
  * triggers the encode and decode loops
  * @TODO: add the parsing of the key file in there
+ * @NOTE: maybe do some multi threading in the future
  */
 void file_opener_and_writer(char** argv, int progress) {
 	FILE* input;

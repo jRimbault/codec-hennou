@@ -2,13 +2,25 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-05 18:56:54
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-08 22:16:55
+ * @Last Modified time: 2017-01-10 07:26:58
  * @Description: projet de crypto
  * programme original en python réécriture en C
  */
 
+#ifndef HEADER
+#define HEADER
 #include "header.h"
+#endif
+
+#ifndef FUNCTIONS
+#define FUNCTIONS
 #include "functions.h"
+#endif
+
+#ifndef SWITCHES
+#define SWITCHES
+#include "switches.h"
+#endif
 
 int main(int argc, char** argv) {
 	int progress;
