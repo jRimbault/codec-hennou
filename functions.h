@@ -2,7 +2,7 @@
  * @Author: jRimbault
  * @Date:   2017-01-08 21:59:30
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-10 16:32:16
+ * @Last Modified time: 2017-01-10 17:54:49
  * @Description: 
  */
 
@@ -37,4 +37,4 @@ void* decode_loop(void*);
  * Opens the input and output files, creates buffers,
  * triggers the encode and decode loops
  */
-void file_opener_and_writer(char**, int);
+void file_opener_and_writer(char**, int, int);

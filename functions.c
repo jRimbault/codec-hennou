@@ -2,7 +2,7 @@
  * @Author: jRimbault
  * @Date:   2017-01-08 22:00:10
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-10 16:32:20
+ * @Last Modified time: 2017-01-10 18:34:49
  * @Description:
  */
 
@@ -21,9 +21,9 @@
 #include "switches.h"
 #endif
 
-#define NUMBER_OF_THREADS 3
+#define NUM_THREADS 4
 
-pthread_t loops[NUMBER_OF_THREADS];
+pthread_t loops[NUM_THREADS];
 char* buffer_output;
 
 typedef struct arg_struct {
@@ -33,6 +33,7 @@ typedef struct arg_struct {
 	long end;
 	int progress;
 	int thread;
+	int number_of_threads_arg;
 } arg_struct;
 
 /*
@@ -61,6 +62,7 @@ void help() {
  * A simple progress indicator
  * it adds around 30 to 40% execution time
  * on small files, 5 to 20% on large files
+ * @NOTE: NOT IMPLEMENTED IN MUTLITHREADED WORKLOAD
  */
 void progress_indicator(long i, long filelen) {
 	filelen = filelen / 100;
@@ -90,28 +92,18 @@ void* encode_loop(void* arg) {
 	char* buffer_input = args -> buffer_input;
 	buffer_output = args -> buffer_output;
 	int progress = args -> progress;
+	int number_of_threads_arg = args -> number_of_threads_arg;
 	pthread_t id = pthread_self();
 	int thread = args -> thread;
-	long i;
-	if (pthread_equal(id, loops[0])) {
-		for (i = begin; i < end; i++) {
-			if (i%NUMBER_OF_THREADS==0)	{
-				buffer_output[i*2]   = encode_character_switch(quartet_1(buffer_input[i]));
-				buffer_output[i*2+1] = encode_character_switch(quartet_2(buffer_input[i]));
-			}
-		}
-	} else if (pthread_equal(id, loops[1])) {
-		for (i = begin; i < end; i++) {
-			if (i%NUMBER_OF_THREADS==1)	{
-				buffer_output[i*2]   = encode_character_switch(quartet_1(buffer_input[i]));
-				buffer_output[i*2+1] = encode_character_switch(quartet_2(buffer_input[i]));
-			}
-		}
-	} else {
-		for (i = begin; i < end; i++) {
-			if (i%NUMBER_OF_THREADS==2)	{
-				buffer_output[i*2]   = encode_character_switch(quartet_1(buffer_input[i]));
-				buffer_output[i*2+1] = encode_character_switch(quartet_2(buffer_input[i]));
+	long i, j;
+
+	for (j = 0; j < NUM_THREADS; j++) {
+		if (pthread_equal(id, loops[j])) {
+			for (i = begin; i < end; i++) {
+				if (i%NUM_THREADS==j)	{
+					buffer_output[i*2]   = encode_character_switch(quartet_1(buffer_input[i]));
+					buffer_output[i*2+1] = encode_character_switch(quartet_2(buffer_input[i]));
+				}
 			}
 		}
 	}
@@ -125,33 +117,21 @@ void* decode_loop(void* arg) {
 	char* buffer_input = args -> buffer_input;
 	buffer_output = args -> buffer_output;
 	int progress = args -> progress;
+	int number_of_threads_arg = args -> number_of_threads_arg;
 	pthread_t id = pthread_self();
 	int thread = args -> thread;
-	long i;
+	long i, j;
 	char c, d;
+
 	end = end / 2;
-	if (pthread_equal(id, loops[0])) {
-		for (i = begin; i < end; i++) {
-			if (i%NUMBER_OF_THREADS==0)	{
-				c = decode_character_switch(buffer_input[i*2]);
-				d = decode_character_switch(buffer_input[i*2+1]) << 4; /*Bitshift pour être sur*/
-				buffer_output[i] = c + d;
-			}
-		}
-	} else if (pthread_equal(id, loops[1])){
-		for (i = begin; i < end; i++) {
-			if (i%NUMBER_OF_THREADS==1)	{
-				c = decode_character_switch(buffer_input[i*2]);
-				d = decode_character_switch(buffer_input[i*2+1]) << 4; /*Bitshift pour être sur*/
-				buffer_output[i] = c + d;
-			}
-		}
-	} else {
-		for (i = begin; i < end; i++) {
-			if (i%NUMBER_OF_THREADS==2)	{
-				c = decode_character_switch(buffer_input[i*2]);
-				d = decode_character_switch(buffer_input[i*2+1]) << 4; /*Bitshift pour être sur*/
-				buffer_output[i] = c + d;
+	for (j = 0; j < NUM_THREADS; j++) {
+		if (pthread_equal(id, loops[j])) {
+			for (i = begin; i < end; i++) {
+				if (i%NUM_THREADS==j)	{
+					c = decode_character_switch(buffer_input[i*2]);
+					d = decode_character_switch(buffer_input[i*2+1]) << 4; /*Bitshift pour être sur*/
+					buffer_output[i] = c + d;
+				}
 			}
 		}
 	}
@@ -163,8 +143,8 @@ void* decode_loop(void* arg) {
  * triggers the encode and decode loops
  * @TODO: add the parsing function of the key file in there
  */
-void file_opener_and_writer(char** argv, int progress) {
-FILE* input;
+void file_opener_and_writer(char** argv, int progress, int number_of_threads_arg) {
+	FILE* input;
 	FILE* output;
 	char *buffer_input;
 	long filelen;
@@ -190,38 +170,40 @@ FILE* input;
 			buffer_input = (char *)malloc((filelen + 1)*sizeof(char));
 			buffer_output = (char *)malloc((filelen + 1)*sizeof(char)*2);
 			fread(buffer_input, filelen, 1, input);
+			
 			args.buffer_input = buffer_input;
 			args.buffer_output = buffer_output;
 			args.begin = 0;
 			args.end = filelen;
 			args.progress = progress;
+			args.number_of_threads_arg = number_of_threads_arg;
 			/*
 			 * Either encrypt or decrypt
 			 * argv[1] first argument
 			 */
 			if (!strcmp(argv[1], "encrypt")) {
-				for(i = 0; i < NUMBER_OF_THREADS; i++) {
+				for(i = 0; i < NUM_THREADS; i++) {
 					args.thread = i;
 					err = pthread_create(&(loops[i]), NULL, &encode_loop, (void *)&args);
 					if (err != 0) {
 						printf("Can't create thread :[%s]\n", strerror(err));
 					}
 				}
-				pthread_join (loops[0], NULL);
-				pthread_join (loops[1], NULL);
-				pthread_join (loops[2], NULL);
+				for(i = 0; i < NUM_THREADS; i++) {
+					pthread_join(loops[i], NULL);
+				}
 				fwrite(buffer_output, sizeof(char), filelen * 2, output);
 			} else if (!strcmp(argv[1], "decrypt")) {
-				for(i = 0; i < NUMBER_OF_THREADS; i++) {
+				for(i = 0; i < NUM_THREADS; i++) {
 					args.thread = i;
 					err = pthread_create(&(loops[i]), NULL, &decode_loop, (void *)&args);
 					if (err != 0) {
 						printf("Can't create thread :[%s]\n", strerror(err));
 					}
 				}
-				pthread_join (loops[0], NULL);
-				pthread_join (loops[1], NULL);
-				pthread_join (loops[2], NULL);
+				for(i = 0; i < NUM_THREADS; i++) {
+					pthread_join(loops[i], NULL);
+				}
 				fwrite(buffer_output, sizeof(char), filelen / 2, output);
 			} else {
 				printf("Invalid operation. Either 'encrypt' or 'decrypt'.\n");
