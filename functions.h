@@ -2,7 +2,7 @@
  * @Author: jRimbault
  * @Date:   2017-01-08 21:59:30
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-10 17:54:49
+ * @Last Modified time: 2017-01-11 12:44:52
  * @Description: 
  */
 
@@ -20,16 +20,6 @@ void help();
  */
 void progress_indicator(long, long);
 
-/*
- * Left bitshift
- */
-char quartet_1(char);
-
-/*
- * Right bitshift
- */
-char quartet_2(char);
-
 void* encode_loop(void*);
 void* decode_loop(void*);
 
@@ -37,4 +27,4 @@ void* decode_loop(void*);
  * Opens the input and output files, creates buffers,
  * triggers the encode and decode loops
  */
-void file_opener_and_writer(char**, int, int);
+void file_opener_and_writer(void*);

@@ -2,7 +2,7 @@
  * @Author: jRimbault
  * @Date:   2017-01-09 14:16:04
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-10 07:27:11
+ * @Last Modified time: 2017-01-11 12:45:13
  * @Description:
  */
 
@@ -22,6 +22,19 @@
 #endif
 
 char matrice[4] = {0b10001111, 0b11000111, 0b10100100, 0b10010010};
+
+/*
+ * Left bitshift
+ */
+char quartet_1(char c) {
+	return (((c << 4) >> 4) & 0x0f);
+}
+/*
+ * Right bitshift
+ */
+char quartet_2(char c) {
+	return ((c >> 4) & 0x0f);
+}
 
 /*
  * Receives a half byte (4bits) and returns the corresponding encoded byte

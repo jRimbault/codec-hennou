@@ -2,7 +2,7 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-05 18:56:54
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-10 18:31:30
+ * @Last Modified time: 2017-01-11 12:47:22
  * @Description: projet de crypto
  * programme original en python réécriture en C
  */
@@ -23,8 +23,8 @@
 #endif
 
 int main(int argc, char** argv) {
-	int progress;
-	int number_of_threads_arg;
+	arguments argument;
+	int i;
 	/*
 	 * Checking if sane arguments were given
 	 * before triggering the program
@@ -33,26 +33,36 @@ int main(int argc, char** argv) {
 		help();
 		return 1;
 	}
-	if (!strcmp(argv[1], "help")) {
-		help();
-		return 0;
-	}
 	/*
 	 * Does the user want a progress indicator
 	 * defines the number of threads used
 	 * Dynamic thread number is weird, disabled for now
 	 */
-	progress = 0;
-	number_of_threads_arg = 1;
-	while (--argc > 0) {
-		if (!strcmp(argv[argc], "-progress")) {
-			progress = 1;
+	argument.progress = 0;
+	argument.thread_num_arg = 1;
+	for(i = 0; i < argc; i++) {
+		if (!strcmp(argv[i], "-progress")) {
+			argument.progress = 1;
 		}
-		if (!strcmp(argv[argc], "-thread")) {
-			number_of_threads_arg = atoi(argv[argc+1]);
+		if (!strcmp(argv[i], "-thread")) {
+			argument.thread_num_arg = atoi(argv[i+1]);
+		}
+		if (!strcmp(argv[i], "encrypt")) {
+			argument.operation   = 1;
+			argument.input_file  = argv[i+1];
+			argument.output_file = argv[i+2];
+		}
+		if (!strcmp(argv[i], "decrypt")) {
+			argument.operation   = 2;
+			argument.input_file  = argv[i+1];
+			argument.output_file = argv[i+2];
+		}
+		if (!strcmp(argv[i], "help")) {
+			help();
+			return 0;
 		}
 	}
-	file_opener_and_writer(argv, progress, number_of_threads_arg);
+	file_opener_and_writer(&argument);
 
 	return 0;
 }
