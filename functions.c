@@ -2,7 +2,7 @@
  * @Author: jRimbault
  * @Date:   2017-01-08 22:00:10
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-11 16:19:23
+ * @Last Modified time: 2017-01-11 16:29:34
  * @Description:
  */
 
@@ -25,15 +25,14 @@
 
 pthread_t g_loops[NUM_THREADS];
 
-typedef struct arg_struct_thread {
+typedef struct thread_args {
 	char* buffer_input;
 	char* buffer_output; 
 	long begin;
 	long end;
 	int progress;
-	int thread;
 	int thread_num_arg;
-} arg_struct_thread;
+} thread_args;
 
 typedef struct arguments {
 	int operation;
@@ -80,11 +79,11 @@ void progress_indicator(long i, long filelen) {
 }
 
 void* encode_loop(void* arg) {
-    struct arg_struct_thread *args = arg;
-	char*     buffer_input         = args->buffer_input;
-	char*     buffer_output        = args->buffer_output;
-	pthread_t id                   = pthread_self();
-	long i, j;
+    struct    thread_args *args = arg;
+	char*     buffer_input      = args->buffer_input;
+	char*     buffer_output     = args->buffer_output;
+	pthread_t id                = pthread_self();
+	long      i, j;
 
 	for (j = 0; j < NUM_THREADS; j++) {
 		/*
@@ -99,7 +98,7 @@ void* encode_loop(void* arg) {
 					buffer_output[i*2]   = encode_character_switch(quartet_1(buffer_input[i]));
 					buffer_output[i*2+1] = encode_character_switch(quartet_2(buffer_input[i]));
 				}
-				// progress_indicator(i, args->progress);
+				/*progress_indicator(i, args->progress);*/
 			}
 		}
 	}
@@ -107,12 +106,12 @@ void* encode_loop(void* arg) {
 }
 
 void* decode_loop(void* arg) {
-	struct arg_struct_thread *args = arg;
-	char*     buffer_input         = args->buffer_input;
-	char*     buffer_output        = args->buffer_output;
-	pthread_t id                   = pthread_self();
-	long i, j;
-	char c, d;
+	struct    thread_args *args = arg;
+	char*     buffer_input      = args->buffer_input;
+	char*     buffer_output     = args->buffer_output;
+	pthread_t id                = pthread_self();
+	long      i, j;
+	char      c, d;
 
 	for (j = 0; j < NUM_THREADS; j++) {
 		/*
@@ -128,7 +127,7 @@ void* decode_loop(void* arg) {
 					d = decode_character_switch(buffer_input[i*2+1]) << 4; /*Bitshift pour être sur*/
 					buffer_output[i] = c + d;
 				}
-				// progress_indicator(i, args->progress);
+				/*progress_indicator(i, args->progress);*/
 			}
 		}
 	}
@@ -142,13 +141,13 @@ void* decode_loop(void* arg) {
  */
 void file_opener_and_writer(void* arg) {
 	arguments *arguments = arg;
-	arg_struct_thread args;
+	thread_args args;
 	FILE* input;
 	FILE* output;
 	char* buffer_input;
 	char* buffer_output;
-	long filelen;
-	int err, i;
+	long  filelen;
+	int   err, i;
 	/*
 	 * Either successfully opens the input and output files,
 	 * or fails and print the help() and an error hint.
@@ -163,16 +162,16 @@ void file_opener_and_writer(void* arg) {
 			 * du fichier d'input et d'output
 			 */
 			fseek(input, 0, SEEK_END);
-			filelen = ftell(input);
+			filelen       = ftell(input);
 			rewind(input);
-			buffer_input = (char *)malloc((filelen + 1)*sizeof(char));
+			buffer_input  = (char *)malloc((filelen + 1)*sizeof(char));
 			buffer_output = (char *)malloc((filelen + 1)*sizeof(char)*2);
 			fread(buffer_input, filelen, 1, input);
 			
-			args.buffer_input = buffer_input;
-			args.buffer_output = buffer_output;
-			args.begin = 0;
-			args.progress = arguments->progress;
+			args.buffer_input   = buffer_input;
+			args.buffer_output  = buffer_output;
+			args.begin          = 0;
+			args.progress       = arguments->progress;
 			args.thread_num_arg = arguments->thread_num_arg;
 			/*
 			 * Either encrypt or decrypt
@@ -180,7 +179,6 @@ void file_opener_and_writer(void* arg) {
 			 */
 			if (arguments->operation == 1) {
 				for(i = 0; i < NUM_THREADS; i++) {
-					args.thread = i;
 					args.end = filelen;
 					err = pthread_create(&(g_loops[i]), NULL, &encode_loop, (void *)&args);
 					if (err != 0) {
@@ -193,7 +191,6 @@ void file_opener_and_writer(void* arg) {
 				fwrite(buffer_output, sizeof(char), filelen * 2, output);
 			} else if (arguments->operation == 2) {
 				for(i = 0; i < NUM_THREADS; i++) {
-					args.thread = i;
 					args.end = filelen/2;
 					err = pthread_create(&(g_loops[i]), NULL, &decode_loop, (void *)&args);
 					if (err != 0) {
