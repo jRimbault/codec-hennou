@@ -2,7 +2,7 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-09 14:16:04
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-12 12:22:18
+ * @Last Modified time: 2017-01-12 12:27:36
  * @Description:
  */
 
@@ -119,6 +119,8 @@ char decode_character_switch(char c) {
 		return 0b1101;
 	} else if (c == (matrix[0] ^ matrix[1] ^ matrix[2])) {
 		return 0b1110;
+	} else if (c == (matrix[0] ^ matrix[1] ^ matrix[2] ^ matrix[3])) {
+		return 0b1111;
 	} else {
 		/* 
 		 * Shouldn't ever be triggered since all
