@@ -2,7 +2,6 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-08 22:00:10
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-12 14:14:30
  * @Description:
  */
 
@@ -41,6 +40,12 @@ typedef struct arguments {
 	int   thread_num_arg;
 } arguments;
 
+int check_arg(char* given_arg,char* long_arg, char* short_arg) {
+	if ((!strcmp(given_arg, long_arg)) || (!strcmp(given_arg, short_arg))) {
+		return 1;
+	}
+	return 0;
+}
 /*
  * Help triggered if asked or if wrong arguments were given.
  */
@@ -50,18 +55,18 @@ void help() {
 			"Options:\n"
 			"    Modes:\n"
 			"      Followed by the input file and the output file\n"
-			"        --encrypt  -e   encoding mode\n"
+			"        --encode  -e    encoding mode\n"
 			"             or\n"
-			"        --decrypt  -d   decoding mode\n"
+			"        --decode  -d    decoding mode\n"
 			"    --key       -k      followed by keyfile\n"
 			"    --help      -h      show this help\n"
 			"    --progress  -p      progress indicator !not enabled in multithreaded mode\n"
 			"    --thread    -t      followed by a number 1-4\n\n"
 			"Exemples:\n"
-			"    To encrypt a file:\n"
-			"        codec encrypt key.txt file.jpg file.jpg.c\n\n"
-			"    To decrypt the resulting file:\n"
-			"        codec decrypt key.txt file.jpg.c file.jpg\n\n"
+			"    To encode a file:\n"
+			"        codec -e file.jpg file.jpg.c -k key.txt\n\n"
+			"    To decode the resulting file:\n"
+			"        codec -d file.jpg.c file.jpg -k key.txt\n\n"
 			"Made with ♥ by Jacques Rimbault and Neil Amari.\n"
 			"Note: the visible progress increases compute time by up to 40%%.\n"
 			);
@@ -171,7 +176,7 @@ void file_opener_and_writer(void* arg) {
 			args.thread_num_arg = arguments->thread_num_arg;
 
 			/*
-			 * Either encrypt or decrypt
+			 * Either encode or decode
 			 * arguments-> first argument
 			 */
 			if (arguments->operation == 1) {
@@ -199,7 +204,7 @@ void file_opener_and_writer(void* arg) {
 				}
 				fwrite(args.buffer_output, sizeof(char), filelen / 2, output);
 			} else {
-				printf("Invalid operation. Either 'encrypt' or 'decrypt'.\n");
+				printf("Invalid operation. Either 'encode' or 'decode'.\n");
 				help();
 			}
 

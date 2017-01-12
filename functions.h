@@ -2,12 +2,12 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-08 21:59:30
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-12 10:42:25
  * @Description: 
  */
 
 #include "functions.c"
 
+int check_arg(char*, char*, char*);
 /*
  * Help triggered if asked or if wrong arguments were given.
  */

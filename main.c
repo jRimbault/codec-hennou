@@ -2,7 +2,6 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-05 18:56:54
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-12 14:11:08
  * @Description: projet de secu, encodage
  * programme original en python réécriture en C pour vitesse
  *
@@ -27,7 +26,6 @@
 
 int main(int argc, char** argv) {
 	arguments arguments;
-	int i;
 	/*
 	 * Checking if sane arguments were given
 	 * before triggering the program
@@ -42,35 +40,35 @@ int main(int argc, char** argv) {
 	arguments.progress       = 0;
 	arguments.thread_num_arg = 1;
 	arguments.operation      = 0;
-	for(i = 0; i < argc; i++) {
-		if ((!strcmp(argv[i], "--progress")) || (!strcmp(argv[i], "-p"))) {
+	while(--argc) {
+		if (check_arg(argv[argc], "--progress", "-p")) {
 			arguments.progress = 1;
 		}
-		if ((!strcmp(argv[i], "--thread")) || (!strcmp(argv[i], "-t"))) {
-			arguments.thread_num_arg = atoi(argv[i+1]);
+		if (check_arg(argv[argc], "--thread", "-t")) {
+			arguments.thread_num_arg = atoi(argv[argc+1]);
 		}
-		if ((!strcmp(argv[i], "--key")) || (!strcmp(argv[i], "-k"))) {
-			arguments.keyfile = argv[i+1];
+		if (check_arg(argv[argc], "--key", "-k")) {
+			arguments.keyfile = argv[argc+1];
 		}
-		if ((!strcmp(argv[i], "--encrypt")) || (!strcmp(argv[i], "-e"))) {
+		if (check_arg(argv[argc], "--encode", "-e")) {
 			if (arguments.operation) {
-				printf("Invalid operation. Either 'encrypt' or 'decrypt'.\n");
+				printf("Invalid operation. Either 'encode' or 'decode'.\n");
 				return 0;
 			}
 			arguments.operation   = 1;
-			arguments.input_file  = argv[i+1];
-			arguments.output_file = argv[i+2];
+			arguments.input_file  = argv[argc+1];
+			arguments.output_file = argv[argc+2];
 		}
-		if ((!strcmp(argv[i], "--decrypt")) || (!strcmp(argv[i], "-d"))) {
+		if (check_arg(argv[argc], "--decode", "-d")) {
 			if (arguments.operation) {
-				printf("Invalid operation. Either 'encrypt' or 'decrypt'.\n");
+				printf("Invalid operation. Either 'encode' or 'decode'.\n");
 				return 0;
 			}
 			arguments.operation   = 2;
-			arguments.input_file  = argv[i+1];
-			arguments.output_file = argv[i+2];
+			arguments.input_file  = argv[argc+1];
+			arguments.output_file = argv[argc+2];
 		}
-		if ((!strcmp(argv[i], "--help")) || (!strcmp(argv[i], "-h"))) {
+		if (check_arg(argv[argc], "--help", "-p")) {
 			help();
 			return 0;
 		}
