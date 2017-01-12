@@ -1,8 +1,8 @@
 /**
- * @Author: jRimbault
+ * @Author: jRimbault nAmari
  * @Date:   2017-01-08 22:00:10
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-11 21:45:55
+ * @Last Modified time: 2017-01-12 11:44:19
  * @Description:
  */
 
@@ -23,14 +23,13 @@
 
 #define NUM_THREADS 4
 
-pthread_t g_loops[NUM_THREADS];
-
 typedef struct thread_args {
-	char* buffer_input;
-	char* buffer_output;
-	long  end;
-	int   progress;
-	int   thread_num_arg;
+	pthread_t g_loops[NUM_THREADS];
+	char*     buffer_input;
+	char*     buffer_output;
+	long      end;
+	int       progress;
+	int       thread_num_arg;
 } thread_args;
 
 typedef struct arguments {
@@ -79,21 +78,24 @@ void progress_indicator(long i, long filelen) {
 }
 
 void* encode_loop(void* arg) {
-    struct thread_args* args = arg;
-	long   i, j;
+    thread_args* args = arg;
+	char*  output = args->buffer_output;
+	char*  input  = args->buffer_input;
+	long   i;
+	int    j;
 
 	for (j = 0; j < NUM_THREADS; j++) {
 		/*
 		 * This pthread_equal could could be the only `if`,
 		 * in place of the modulo check, but a pthread_equal 
 		 * costs more time than an modulo check, so performing it only NUM_THREADS times
-		 * instead of (end-begin) times is better
+		 * instead of (args->end) times is better
 		 */
-		if (pthread_equal(pthread_self(), g_loops[j])) {
+		if (pthread_equal(pthread_self(), args->g_loops[j])) {
 			for (i = 0; i < args->end; i++) {
 				if (i % NUM_THREADS == j) {
-					args->buffer_output[i*2]   = encode_character_switch(quartet_1(args->buffer_input[i]));
-					args->buffer_output[i*2+1] = encode_character_switch(quartet_2(args->buffer_input[i]));
+					output[i*2]   = encode_character_switch(quartet_1(input[i]));
+					output[i*2+1] = encode_character_switch(quartet_2(input[i]));
 				}
 				/*progress_indicator(i, args->progress);*/
 			}
@@ -103,23 +105,24 @@ void* encode_loop(void* arg) {
 }
 
 void* decode_loop(void* arg) {
-	struct thread_args* args = arg;
-	long   i, j;
-	char   c, d;
+	thread_args* args = arg;
+	char*  output = args->buffer_output;
+	char*  input  = args->buffer_input;
+	long   i;
+	int    j;
 
 	for (j = 0; j < NUM_THREADS; j++) {
 		/*
 		 * This pthread_equal could could be the only `if`,
 		 * in place of the modulo check, but a pthread_equal 
 		 * costs more time than an modulo check, so performing it only NUM_THREADS times
-		 * instead of (end-begin) times is better
+		 * instead of (args->end) times is better
 		 */
-		if (pthread_equal(pthread_self(), g_loops[j])) {
+		if (pthread_equal(pthread_self(), args->g_loops[j])) {
 			for (i = 0; i < args->end; i++) {
 				if (i % NUM_THREADS == j) {
-					c = decode_character_switch(args->buffer_input[i*2]);
-					d = decode_character_switch(args->buffer_input[i*2+1]) << 4; /*Bitshift pour être sur*/
-					args->buffer_output[i] = c + d;
+					output[i] = decode_character_switch(input[i*2]);
+					output[i] = output[i] + (decode_character_switch(input[i*2+1]) << 4);
 				}
 				/*progress_indicator(i, args->progress);*/
 			}
@@ -170,25 +173,25 @@ void file_opener_and_writer(void* arg) {
 			if (arguments->operation == 1) {
 				for(i = 0; i < NUM_THREADS; i++) {
 					args.end = filelen;
-					err = pthread_create(&(g_loops[i]), NULL, &encode_loop, (void *)&args);
+					err = pthread_create(&(args.g_loops[i]), NULL, &encode_loop, (void *)&args);
 					if (err != 0) {
 						printf("Can't create thread :[%s]\n", strerror(err));
 					}
 				}
 				for(i = 0; i < NUM_THREADS; i++) {
-					pthread_join(g_loops[i], NULL);
+					pthread_join(args.g_loops[i], NULL);
 				}
 				fwrite(args.buffer_output, sizeof(char), filelen * 2, output);
 			} else if (arguments->operation == 2) {
 				for(i = 0; i < NUM_THREADS; i++) {
 					args.end = filelen/2;
-					err = pthread_create(&(g_loops[i]), NULL, &decode_loop, (void *)&args);
+					err = pthread_create(&(args.g_loops[i]), NULL, &decode_loop, (void *)&args);
 					if (err != 0) {
 						printf("Can't create thread :[%s]\n", strerror(err));
 					}
 				}
 				for(i = 0; i < NUM_THREADS; i++) {
-					pthread_join(g_loops[i], NULL);
+					pthread_join(args.g_loops[i], NULL);
 				}
 				fwrite(args.buffer_output, sizeof(char), filelen / 2, output);
 			} else {

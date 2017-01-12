@@ -1,8 +1,8 @@
 /**
- * @Author: jRimbault
+ * @Author: jRimbault nAmari
  * @Date:   2017-01-08 21:59:30
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-11 12:44:52
+ * @Last Modified time: 2017-01-12 10:42:25
  * @Description: 
  */
 
@@ -20,6 +20,9 @@ void help();
  */
 void progress_indicator(long, long);
 
+/*
+ * Loops on individual bytes
+ */
 void* encode_loop(void*);
 void* decode_loop(void*);
 

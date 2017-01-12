@@ -2,9 +2,12 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-05 18:56:54
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-11 21:47:49
- * @Description: projet de crypto
- * programme original en python réécriture en C
+ * @Last Modified time: 2017-01-12 11:40:17
+ * @Description: projet de secu, encodage
+ * programme original en python réécriture en C pour vitesse
+ *
+ * `gcc -O2 -lpthread main.c -o codec` pour compiler
+ * `-Wall` pour débug
  */
 
 #ifndef HEADER
