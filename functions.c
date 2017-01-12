@@ -2,7 +2,7 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-08 22:00:10
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-12 11:44:19
+ * @Last Modified time: 2017-01-12 14:14:30
  * @Description:
  */
 
@@ -35,6 +35,7 @@ typedef struct thread_args {
 typedef struct arguments {
 	char* input_file;
 	char* output_file;
+	char* keyfile;
 	int   operation;
 	int   progress;
 	int   thread_num_arg;
@@ -44,15 +45,18 @@ typedef struct arguments {
  * Help triggered if asked or if wrong arguments were given.
  */
 void help() {
-	printf("Usage: codec [help] [mode] [key file] [input file] [output file] [-progress]\n\n"
+	printf("Usage: codec [--mode inputfile outputfile] [--progress] [--thread 1-4] [--key keyfile] [--help]\n\n"
 			"Encode or decode any file with a G4C key.\n\n"
 			"Options:\n"
-			"    help       show this help\n"
-			"    encrypt    encoding mode\n"
-			"            or              \n"
-			"    decrypt    decoding mode\n"
-			"    -progress  progress indicator\n"
-			"    -thread    followed by a number 1-4\n\n"
+			"    Modes:\n"
+			"      Followed by the input file and the output file\n"
+			"        --encrypt  -e   encoding mode\n"
+			"             or\n"
+			"        --decrypt  -d   decoding mode\n"
+			"    --key       -k      followed by keyfile\n"
+			"    --help      -h      show this help\n"
+			"    --progress  -p      progress indicator !not enabled in multithreaded mode\n"
+			"    --thread    -t      followed by a number 1-4\n\n"
 			"Exemples:\n"
 			"    To encrypt a file:\n"
 			"        codec encrypt key.txt file.jpg file.jpg.c\n\n"

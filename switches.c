@@ -2,7 +2,7 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-09 14:16:04
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-12 12:27:36
+ * @Last Modified time: 2017-01-12 13:47:52
  * @Description:
  */
 
@@ -124,29 +124,34 @@ char decode_character_switch(char c) {
 	} else {
 		/* 
 		 * Shouldn't ever be triggered since all
-		 * possible combinations of 8bits have been made. 0-15
+		 * possible combinations of 4bits have been made. 0-15
 		 */
 		return 0;
 	}
 }
 
-/*
-Stat analysis on the Synaspson.mp4
-cas  0:  4454354
-cas 15:  4315503
-cas  7:  4296136
-cas 11:  4291245
-cas 14:  4267579
-cas  9:  4267520
-cas 13:  4255420
-cas 10:  4252673
-cas  6:  4242862
-cas  5:  4239345
-cas  8:  4235849
-cas  4:  4231940
-cas 12:  4228388
-cas  3:  4218822
-cas  2:  4199661
-cas  1:  4196904
-micro optimization ftw
-*/
+/**
+ * Frequency analysis on Synaspson.mp4:
+ * case  0:  4454354
+ * case 15:  4315503
+ * case  7:  4296136
+ * case 11:  4291245
+ * case 14:  4267579
+ * case  9:  4267520
+ * case 13:  4255420
+ * case 10:  4252673
+ * case  6:  4242862
+ * case  5:  4239345
+ * case  8:  4235849
+ * case  4:  4231940
+ * case 12:  4228388
+ * case  3:  4218822
+ * case  2:  4199661
+ * case  1:  4196904
+ * Indeed, the distribution is about even, I expect different
+ *  files to have a different distribution.
+ *  All cases appear to be in the same order of magnitude. 10⁶
+ * Text files, should have a distribution slightly skewed by the
+ *  character frequency of the language they were written in.
+ *  Typically: e, t, a, o, i, n, s, r, etc.
+ */
