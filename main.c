@@ -2,7 +2,7 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-05 18:56:54
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-11 16:23:44
+ * @Last Modified time: 2017-01-11 21:47:49
  * @Description: projet de crypto
  * programme original en python réécriture en C
  */
@@ -34,9 +34,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 	/*
-	 * Does the user want a progress indicator
-	 * defines the number of threads used
-	 * Dynamic thread number is weird, disabled for now
+	 * Parses the arguments
 	 */
 	argument.progress       = 0;
 	argument.thread_num_arg = 1;

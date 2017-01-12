@@ -2,7 +2,7 @@
  * @Author: jRimbault
  * @Date:   2017-01-08 22:00:10
  * @Last Modified by:   jRimbault
- * @Last Modified time: 2017-01-11 16:29:34
+ * @Last Modified time: 2017-01-11 21:45:55
  * @Description:
  */
 
@@ -27,20 +27,20 @@ pthread_t g_loops[NUM_THREADS];
 
 typedef struct thread_args {
 	char* buffer_input;
-	char* buffer_output; 
-	long begin;
-	long end;
-	int progress;
-	int thread_num_arg;
+	char* buffer_output;
+	long  end;
+	int   progress;
+	int   thread_num_arg;
 } thread_args;
 
 typedef struct arguments {
-	int operation;
 	char* input_file;
 	char* output_file;
-	int progress;
-	int thread_num_arg;
+	int   operation;
+	int   progress;
+	int   thread_num_arg;
 } arguments;
+
 /*
  * Help triggered if asked or if wrong arguments were given.
  */
@@ -79,11 +79,8 @@ void progress_indicator(long i, long filelen) {
 }
 
 void* encode_loop(void* arg) {
-    struct    thread_args *args = arg;
-	char*     buffer_input      = args->buffer_input;
-	char*     buffer_output     = args->buffer_output;
-	pthread_t id                = pthread_self();
-	long      i, j;
+    struct thread_args* args = arg;
+	long   i, j;
 
 	for (j = 0; j < NUM_THREADS; j++) {
 		/*
@@ -92,11 +89,11 @@ void* encode_loop(void* arg) {
 		 * costs more time than an modulo check, so performing it only NUM_THREADS times
 		 * instead of (end-begin) times is better
 		 */
-		if (pthread_equal(id, g_loops[j])) {
-			for (i = args->begin; i < args->end; i++) {
-				if (i%NUM_THREADS==j)	{
-					buffer_output[i*2]   = encode_character_switch(quartet_1(buffer_input[i]));
-					buffer_output[i*2+1] = encode_character_switch(quartet_2(buffer_input[i]));
+		if (pthread_equal(pthread_self(), g_loops[j])) {
+			for (i = 0; i < args->end; i++) {
+				if (i % NUM_THREADS == j) {
+					args->buffer_output[i*2]   = encode_character_switch(quartet_1(args->buffer_input[i]));
+					args->buffer_output[i*2+1] = encode_character_switch(quartet_2(args->buffer_input[i]));
 				}
 				/*progress_indicator(i, args->progress);*/
 			}
@@ -106,12 +103,9 @@ void* encode_loop(void* arg) {
 }
 
 void* decode_loop(void* arg) {
-	struct    thread_args *args = arg;
-	char*     buffer_input      = args->buffer_input;
-	char*     buffer_output     = args->buffer_output;
-	pthread_t id                = pthread_self();
-	long      i, j;
-	char      c, d;
+	struct thread_args* args = arg;
+	long   i, j;
+	char   c, d;
 
 	for (j = 0; j < NUM_THREADS; j++) {
 		/*
@@ -120,12 +114,12 @@ void* decode_loop(void* arg) {
 		 * costs more time than an modulo check, so performing it only NUM_THREADS times
 		 * instead of (end-begin) times is better
 		 */
-		if (pthread_equal(id, g_loops[j])) {
-			for (i = args->begin; i < args->end; i++) {
-				if (i%NUM_THREADS==j)	{
-					c = decode_character_switch(buffer_input[i*2]);
-					d = decode_character_switch(buffer_input[i*2+1]) << 4; /*Bitshift pour être sur*/
-					buffer_output[i] = c + d;
+		if (pthread_equal(pthread_self(), g_loops[j])) {
+			for (i = 0; i < args->end; i++) {
+				if (i % NUM_THREADS == j) {
+					c = decode_character_switch(args->buffer_input[i*2]);
+					d = decode_character_switch(args->buffer_input[i*2+1]) << 4; /*Bitshift pour être sur*/
+					args->buffer_output[i] = c + d;
 				}
 				/*progress_indicator(i, args->progress);*/
 			}
@@ -144,16 +138,14 @@ void file_opener_and_writer(void* arg) {
 	thread_args args;
 	FILE* input;
 	FILE* output;
-	char* buffer_input;
-	char* buffer_output;
 	long  filelen;
 	int   err, i;
+
 	/*
 	 * Either successfully opens the input and output files,
 	 * or fails and print the help() and an error hint.
 	 */
 	input = fopen(arguments->input_file, "rb");
-	// printf("SOME.\n");
 	if (input) {
 		output = fopen(arguments->output_file, "wb");
 		if (output) {
@@ -164,15 +156,13 @@ void file_opener_and_writer(void* arg) {
 			fseek(input, 0, SEEK_END);
 			filelen       = ftell(input);
 			rewind(input);
-			buffer_input  = (char *)malloc((filelen + 1)*sizeof(char));
-			buffer_output = (char *)malloc((filelen + 1)*sizeof(char)*2);
-			fread(buffer_input, filelen, 1, input);
+			args.buffer_input  = (char *)malloc((filelen + 1)*sizeof(char));
+			args.buffer_output = (char *)malloc((filelen + 1)*sizeof(char)*2);
+			fread(args.buffer_input, filelen, 1, input);
 			
-			args.buffer_input   = buffer_input;
-			args.buffer_output  = buffer_output;
-			args.begin          = 0;
 			args.progress       = arguments->progress;
 			args.thread_num_arg = arguments->thread_num_arg;
+
 			/*
 			 * Either encrypt or decrypt
 			 * arguments-> first argument
@@ -188,7 +178,7 @@ void file_opener_and_writer(void* arg) {
 				for(i = 0; i < NUM_THREADS; i++) {
 					pthread_join(g_loops[i], NULL);
 				}
-				fwrite(buffer_output, sizeof(char), filelen * 2, output);
+				fwrite(args.buffer_output, sizeof(char), filelen * 2, output);
 			} else if (arguments->operation == 2) {
 				for(i = 0; i < NUM_THREADS; i++) {
 					args.end = filelen/2;
@@ -200,7 +190,7 @@ void file_opener_and_writer(void* arg) {
 				for(i = 0; i < NUM_THREADS; i++) {
 					pthread_join(g_loops[i], NULL);
 				}
-				fwrite(buffer_output, sizeof(char), filelen / 2, output);
+				fwrite(args.buffer_output, sizeof(char), filelen / 2, output);
 			} else {
 				printf("Invalid operation. Either 'encrypt' or 'decrypt'.\n");
 				help();
@@ -209,8 +199,8 @@ void file_opener_and_writer(void* arg) {
 			/*
 			 * Clear buffers
 			 */
-			free(buffer_input);
-			free(buffer_output);
+			free(args.buffer_input);
+			free(args.buffer_output);
 			/*
 			 * Close output file
 			 */
@@ -230,5 +220,4 @@ void file_opener_and_writer(void* arg) {
 	if (arguments->progress) {
 		printf("Done!\n");
 	}
-	// printf("SOME.\n");
 }
