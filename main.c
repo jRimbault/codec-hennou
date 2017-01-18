@@ -41,39 +41,43 @@ int main(int argc, char** argv) {
 	arguments.thread_num_arg = 1;
 	arguments.operation      = 0;
 	while(--argc) {
-		if (check_arg(argv[argc], "--progress", "-p")) {
-			arguments.progress = 1;
+		if (arg_is(argv[argc], "--progress", "-p")) {
+			arguments.progress    = 1;
 		}
-		if (check_arg(argv[argc], "--thread", "-t")) {
+		if (arg_is(argv[argc], "--thread", "-t")) {
 			arguments.thread_num_arg = atoi(argv[argc+1]);
 		}
-		if (check_arg(argv[argc], "--key", "-k")) {
-			arguments.keyfile = argv[argc+1];
+		if (arg_is(argv[argc], "--key", "-k")) {
+			arguments.keyfile     = argv[argc+1];
 		}
-		if (check_arg(argv[argc], "--encode", "-e")) {
+		if (arg_is(argv[argc], "--encode", "-e")) {
 			if (arguments.operation) {
 				printf("Invalid operation. Either 'encode' or 'decode'.\n");
-				return 0;
+				return 1;
 			}
 			arguments.operation   = 1;
 			arguments.input_file  = argv[argc+1];
 			arguments.output_file = argv[argc+2];
 		}
-		if (check_arg(argv[argc], "--decode", "-d")) {
+		if (arg_is(argv[argc], "--decode", "-d")) {
 			if (arguments.operation) {
 				printf("Invalid operation. Either 'encode' or 'decode'.\n");
-				return 0;
+				return 1;
 			}
 			arguments.operation   = 2;
 			arguments.input_file  = argv[argc+1];
 			arguments.output_file = argv[argc+2];
 		}
-		if (check_arg(argv[argc], "--help", "-p")) {
+		if (arg_is(argv[argc], "--help", "-p")) {
 			help();
 			return 0;
 		}
 	}
-	file_opener_and_writer(&arguments);
+	if (arguments.operation && arguments.input_file && arguments.output_file) {
+		file_opener_and_writer(&arguments);
+	} else {
+		help();
+	}
 
 	return 0;
 }

@@ -20,9 +20,9 @@ char quartet_2(char);
 /*
  * Receives a half byte (4bits) and returns the corresponding encoded byte
  */
-char encode_character_switch(char);
+char encode_switch(char);
 
 /*
  * Receives an encoded byte and returns the original byte
  */
-char decode_character_switch(char);
+char decode_switch(char);

@@ -24,7 +24,7 @@
  * Left bitshift
  */
 char quartet_1(char c) {
-	return (((c << 4) >> 4) & 0x0f);
+	return (c & 0x0f);
 }
 /*
  * Right bitshift
@@ -35,8 +35,9 @@ char quartet_2(char c) {
 
 /*
  * Receives a half byte (4bits) and returns the corresponding encoded byte
+ * @NOTE: ^ is the xor operator
  */
-char encode_character_switch(char c) {
+char encode_switch(char c) {
 	char matrix[4] = {0b10001111, 0b11000111, 0b10100100, 0b10010010};
 	switch(c) {
 		case 0b0000: /*  0 */
@@ -85,8 +86,9 @@ char encode_character_switch(char c) {
  * The only way to speed things up here would be statistical analysis of
  * the frequency of the different cases, I'm betting it would not bring any
  * major improvement and the distribution would be about even for all cases
+ * @NOTE: ^ is the xor operator
  */
-char decode_character_switch(char c) {
+char decode_switch(char c) {
 	char matrix[4] = {0b10001111, 0b11000111, 0b10100100, 0b10010010};
 	if(c == 0) {
 		return 0b0000;
@@ -130,7 +132,7 @@ char decode_character_switch(char c) {
 }
 
 /**
- * Frequency analysis on Synaspson.mp4:
+ * Frequency analysis on Synaspson.mp4/oHennou.mp4:
  *   case  0:  4454354
  *   case 15:  4315503
  *   case  7:  4296136

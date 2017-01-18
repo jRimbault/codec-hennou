@@ -20,27 +20,10 @@
 #include "switches.h"
 #endif
 
-#define NUM_THREADS 4
-
-typedef struct thread_args {
-	pthread_t g_loops[NUM_THREADS];
-	char*     buffer_input;
-	char*     buffer_output;
-	long      end;
-	int       progress;
-	int       thread_num_arg;
-} thread_args;
-
-typedef struct arguments {
-	char* input_file;
-	char* output_file;
-	char* keyfile;
-	int   operation;
-	int   progress;
-	int   thread_num_arg;
-} arguments;
-
-int check_arg(char* given_arg,char* long_arg, char* short_arg) {
+/*
+ * Function to parse arguments
+ */
+int arg_is(char* given_arg,char* long_arg, char* short_arg) {
 	if ((!strcmp(given_arg, long_arg)) || (!strcmp(given_arg, short_arg))) {
 		return 1;
 	}
@@ -86,39 +69,10 @@ void progress_indicator(long i, long filelen) {
 	}
 }
 
-void* encode_loop(void* arg) {
-    thread_args* args = arg;
-	char*  output = args->buffer_output;
-	char*  input  = args->buffer_input;
-	long   i;
-	int    j;
-
-	for (j = 0; j < NUM_THREADS; j++) {
-		/*
-		 * This pthread_equal could could be the only `if`,
-		 * in place of the modulo check, but a pthread_equal 
-		 * costs more time than an modulo check, so performing it only NUM_THREADS times
-		 * instead of (args->end) times is better
-		 */
-		if (pthread_equal(pthread_self(), args->g_loops[j])) {
-			for (i = 0; i < args->end; i++) {
-				if (i % NUM_THREADS == j) {
-					output[i*2]   = encode_character_switch(quartet_1(input[i]));
-					output[i*2+1] = encode_character_switch(quartet_2(input[i]));
-				}
-				/*progress_indicator(i, args->progress);*/
-			}
-		}
-	}
-	pthread_exit(NULL);
-}
-
-void* decode_loop(void* arg) {
+void* main_loop(void* arg) {
 	thread_args* args = arg;
-	char*  output = args->buffer_output;
-	char*  input  = args->buffer_input;
-	long   i;
-	int    j;
+	long i;
+	int  j;
 
 	for (j = 0; j < NUM_THREADS; j++) {
 		/*
@@ -130,10 +84,20 @@ void* decode_loop(void* arg) {
 		if (pthread_equal(pthread_self(), args->g_loops[j])) {
 			for (i = 0; i < args->end; i++) {
 				if (i % NUM_THREADS == j) {
-					output[i] = decode_character_switch(input[i*2]);
-					output[i] = output[i] + (decode_character_switch(input[i*2+1]) << 4);
+					switch(args->operation) {
+						case 1:
+							args->buffer_output[i*2]   = encode_switch(quartet_1(args->buffer_input[i]));
+							args->buffer_output[i*2+1] = encode_switch(quartet_2(args->buffer_input[i]));
+							break;
+						case 2:
+							args->buffer_output[i] = decode_switch(args->buffer_input[i*2]) + (decode_switch(args->buffer_input[i*2+1]) << 4);
+							break;
+						default:
+							printf("How did you even get here??\n");
+							pthread_exit(NULL);
+							break;
+					}
 				}
-				/*progress_indicator(i, args->progress);*/
 			}
 		}
 	}
@@ -159,53 +123,59 @@ void file_opener_and_writer(void* arg) {
 	 */
 	input = fopen(arguments->input_file, "rb");
 	if (input) {
+		remove(arguments->output_file);
 		output = fopen(arguments->output_file, "wb");
 		if (output) {
 			/* 
 			 * Construction des buffer de bytes 
 			 * du fichier d'input et d'output
+			 * et des arguments pour les threads
 			 */
 			fseek(input, 0, SEEK_END);
-			filelen       = ftell(input);
+			filelen             = ftell(input);
 			rewind(input);
-			args.buffer_input  = (char *)malloc((filelen + 1)*sizeof(char));
-			args.buffer_output = (char *)malloc((filelen + 1)*sizeof(char)*2);
-			fread(args.buffer_input, filelen, 1, input);
-			
+			args.buffer_input   = (char *)malloc((filelen + 1)*sizeof(char));
+			args.buffer_output  = (char *)malloc((filelen + 1)*sizeof(char)*2);
 			args.progress       = arguments->progress;
 			args.thread_num_arg = arguments->thread_num_arg;
-
+			args.operation      = arguments->operation;
+			fread(args.buffer_input, filelen, 1, input);
+			
 			/*
 			 * Either encode or decode
-			 * arguments-> first argument
+			 * 1 -> encode
+			 * 2 -> decode
 			 */
-			if (arguments->operation == 1) {
-				for(i = 0; i < NUM_THREADS; i++) {
-					args.end = filelen;
-					err = pthread_create(&(args.g_loops[i]), NULL, &encode_loop, (void *)&args);
-					if (err != 0) {
-						printf("Can't create thread :[%s]\n", strerror(err));
+			switch(arguments->operation) {
+				case 1:
+					for(i = 0; i < NUM_THREADS; i++) {
+						args.end = filelen;
+						err = pthread_create(&(args.g_loops[i]), NULL, &main_loop, (void *)&args);
+						if (err != 0) {
+							printf("Can't create thread :[%s]\n", strerror(err));
+						}
 					}
-				}
-				for(i = 0; i < NUM_THREADS; i++) {
-					pthread_join(args.g_loops[i], NULL);
-				}
-				fwrite(args.buffer_output, sizeof(char), filelen * 2, output);
-			} else if (arguments->operation == 2) {
-				for(i = 0; i < NUM_THREADS; i++) {
-					args.end = filelen/2;
-					err = pthread_create(&(args.g_loops[i]), NULL, &decode_loop, (void *)&args);
-					if (err != 0) {
-						printf("Can't create thread :[%s]\n", strerror(err));
+					for(i = 0; i < NUM_THREADS; i++) {
+						pthread_join(args.g_loops[i], NULL);
 					}
-				}
-				for(i = 0; i < NUM_THREADS; i++) {
-					pthread_join(args.g_loops[i], NULL);
-				}
-				fwrite(args.buffer_output, sizeof(char), filelen / 2, output);
-			} else {
-				printf("Invalid operation. Either 'encode' or 'decode'.\n");
-				help();
+					fwrite(args.buffer_output, sizeof(char), filelen * 2, output);
+					break;
+				case 2:
+					for(i = 0; i < NUM_THREADS; i++) {
+						args.end = filelen / 2;
+						err = pthread_create(&(args.g_loops[i]), NULL, &main_loop, (void *)&args);
+						if (err != 0) {
+							printf("Can't create thread :[%s]\n", strerror(err));
+						}
+					}
+					for(i = 0; i < NUM_THREADS; i++) {
+						pthread_join(args.g_loops[i], NULL);
+					}
+					fwrite(args.buffer_output, sizeof(char), filelen / 2, output);
+					break;
+				default:
+					printf("How did you even get here??\n");
+					break;
 			}
 
 			/*

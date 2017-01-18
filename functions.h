@@ -7,7 +7,7 @@
 
 #include "functions.c"
 
-int check_arg(char*, char*, char*);
+int arg_is(char*, char*, char*);
 /*
  * Help triggered if asked or if wrong arguments were given.
  */
@@ -23,8 +23,7 @@ void progress_indicator(long, long);
 /*
  * Loops on individual bytes
  */
-void* encode_loop(void*);
-void* decode_loop(void*);
+void* main_loop(void* arg);
 
 /*
  * Opens the input and output files, creates buffers,
