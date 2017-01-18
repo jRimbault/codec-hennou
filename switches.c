@@ -21,13 +21,20 @@
 #endif
 
 /*
- * Left bitshift
+ * Right 4bits
+ * c is char
+ * char are one byte
+ * `&` is the and operator, the resulting byte of the operation:
+ *     `c & 00001111`
+ * is the right side of the c byte
  */
 char quartet_1(char c) {
 	return (c & 0x0f);
 }
 /*
- * Right bitshift
+ * Left 4bits
+ * `>> 4` makes the c byte move 4 bits to the right
+ * same operation as above
  */
 char quartet_2(char c) {
 	return ((c >> 4) & 0x0f);

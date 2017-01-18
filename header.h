@@ -2,7 +2,9 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-08 22:01:39
  * @Last Modified by:   jRimbault
- * @Description: 
+ * @Description: standards libraries used
+ * number of threads
+ * structures definition
  */
 
 #include <stdio.h>

@@ -21,7 +21,7 @@
 #endif
 
 /*
- * Function to parse arguments
+ * Function to check arguments
  */
 int arg_is(char* given_arg,char* long_arg, char* short_arg) {
 	if ((!strcmp(given_arg, long_arg)) || (!strcmp(given_arg, short_arg))) {
@@ -69,8 +69,8 @@ void progress_indicator(long i, long filelen) {
 	}
 }
 
-void* main_loop(void* arg) {
-	thread_args* args = arg;
+void* main_loop(void* structure) {
+	thread_args* args = structure;
 	long i;
 	int  j;
 
@@ -109,8 +109,8 @@ void* main_loop(void* arg) {
  * triggers the encode and decode loops
  * @TODO: add the parsing function of the key file in there
  */
-void file_opener_and_writer(void* arg) {
-	arguments *arguments = arg;
+void file_opener_and_writer(void* structure) {
+	arguments* arguments = structure;
 	thread_args args;
 	FILE* input;
 	FILE* output;
@@ -127,9 +127,9 @@ void file_opener_and_writer(void* arg) {
 		output = fopen(arguments->output_file, "wb");
 		if (output) {
 			/* 
-			 * Construction des buffer de bytes 
-			 * du fichier d'input et d'output
-			 * et des arguments pour les threads
+			 * Builds the buffers 
+			 * of the input and output files
+			 * Builds the threads arguments
 			 */
 			fseek(input, 0, SEEK_END);
 			filelen             = ftell(input);
@@ -155,9 +155,11 @@ void file_opener_and_writer(void* arg) {
 							printf("Can't create thread :[%s]\n", strerror(err));
 						}
 					}
+
 					for(i = 0; i < NUM_THREADS; i++) {
 						pthread_join(args.g_loops[i], NULL);
 					}
+
 					fwrite(args.buffer_output, sizeof(char), filelen * 2, output);
 					break;
 				case 2:
@@ -168,9 +170,11 @@ void file_opener_and_writer(void* arg) {
 							printf("Can't create thread :[%s]\n", strerror(err));
 						}
 					}
+
 					for(i = 0; i < NUM_THREADS; i++) {
 						pthread_join(args.g_loops[i], NULL);
 					}
+					
 					fwrite(args.buffer_output, sizeof(char), filelen / 2, output);
 					break;
 				default:

@@ -24,6 +24,10 @@
 #include "switches.h"
 #endif
 
+/*
+ * main() serves only to parse the arguments and call the actual
+ * program after parsing
+ */
 int main(int argc, char** argv) {
 	arguments arguments;
 	/*
