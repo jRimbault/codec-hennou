@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
 			arguments.input_file  = argv[argc+1];
 			arguments.output_file = argv[argc+2];
 		}
-		if (arg_is(argv[argc], "--help", "-p")) {
+		if (arg_is(argv[argc], "--help", "-h")) {
 			help();
 			return 0;
 		}
