@@ -44,8 +44,8 @@ char quartet_2(char c) {
  * Receives a half byte (4bits) and returns the corresponding encoded byte
  * @NOTE: ^ is the xor operator
  */
-char encode_switch(char c) {
-	char matrix[4] = {0b10001111, 0b11000111, 0b10100100, 0b10010010};
+char encode_switch(char c, char* matrix) {
+	// char matrix[4] = {0b10001111, 0b11000111, 0b10100100, 0b10010010};
 	switch(c) {
 		case 0b0000: /*  0 */
 			return 0;
@@ -95,8 +95,8 @@ char encode_switch(char c) {
  * major improvement and the distribution would be about even for all cases
  * @NOTE: ^ is the xor operator
  */
-char decode_switch(char c) {
-	char matrix[4] = {0b10001111, 0b11000111, 0b10100100, 0b10010010};
+char decode_switch(char c, char* matrix) {
+	// char matrix[4] = {0b10001111, 0b11000111, 0b10100100, 0b10010010};
 	if(c == 0) {
 		return 0b0000;
 	} else if (c == matrix[3]) {

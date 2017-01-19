@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <math.h>
 
 #define NUM_THREADS 4
 
@@ -18,6 +19,7 @@ typedef struct thread_args {
 	pthread_t g_loops[NUM_THREADS];
 	char*     buffer_input;
 	char*     buffer_output;
+	char*     matrix;
 	long      end;
 	int       operation;
 	int       progress;

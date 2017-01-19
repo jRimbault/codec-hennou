@@ -86,14 +86,15 @@ void* main_loop(void* structure) {
 				if (i % NUM_THREADS == j) {
 					switch(args->operation) {
 						case 1:
-							args->buffer_output[i*2]   = encode_switch(quartet_1(args->buffer_input[i]));
-							args->buffer_output[i*2+1] = encode_switch(quartet_2(args->buffer_input[i]));
+							args->buffer_output[i*2]   = encode_switch(quartet_1(args->buffer_input[i]), args->matrix);
+							args->buffer_output[i*2+1] = encode_switch(quartet_2(args->buffer_input[i]), args->matrix);
 							/*if (args->progress) {
 								progress_indicator(i, args->end);
 							}*/
 							break;
 						case 2:
-							args->buffer_output[i] = decode_switch(args->buffer_input[i*2]) + (decode_switch(args->buffer_input[i*2+1]) << 4);
+							args->buffer_output[i] = decode_switch((args->buffer_input[i*2]), args->matrix);
+							args->buffer_output[i] = args->buffer_output[i] + (decode_switch(args->buffer_input[i*2+1], args->matrix) << 4);
 							/*if (args->progress) {
 								progress_indicator(i, args->end);
 							}*/
@@ -116,9 +117,28 @@ void file_opener_and_writer(void* structure) {
 	thread_args args;
 	FILE* input;
 	FILE* output;
+	FILE* keyfile;
 	long  filelen;
-	int   err, i;
+	int   err, i, j;
 
+
+	keyfile = fopen(arguments->keyfile, "r");
+	if (keyfile) {      
+		fseek(keyfile, 5, SEEK_SET);
+		char keychar[35];
+		for (i = 0; (i < 35); i++)   {
+			keychar[i] = getc(keyfile);
+		}
+		for (j = 0; j < 4; j++) {
+			args.matrix[j] = 0;
+			for (i = 7; i >= 0; i--) {
+				args.matrix[j] = args.matrix[j] + keychar[i+(j*9)] * pow(2, i);
+			}
+		}
+	} else {
+		printf("Couldn't access key file.\n");
+		return;
+	}
 	/*
 	 * Either successfully opens the input and output files,
 	 * or fails and print the help() and an error hint.
