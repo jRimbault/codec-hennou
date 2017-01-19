@@ -31,15 +31,9 @@
 int main(int argc, char** argv) {
 	arguments arguments;
 	/*
+	 * Parses the arguments
 	 * Checking if sane arguments were given
 	 * before triggering the program
-	 */
-	if (argc < 4) {
-		help();
-		return 1;
-	}
-	/*
-	 * Parses the arguments
 	 */
 	arguments.progress       = 0;
 	arguments.thread_num_arg = 1;
@@ -77,10 +71,14 @@ int main(int argc, char** argv) {
 			return 0;
 		}
 	}
+	/*
+	 * If sane arguments were given, proceed to the main function
+	 */
 	if (arguments.operation && arguments.input_file && arguments.output_file) {
 		file_opener_and_writer(&arguments);
 	} else {
-		help();
+		printf("You didn't tell me what to do! Use --help.\n");
+		return 1;
 	}
 
 	return 0;

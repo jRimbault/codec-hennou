@@ -37,13 +37,13 @@ void help() {
 			"Encode or decode any file with a G4C key.\n\n"
 			"Options:\n"
 			"    Modes:\n"
-			"      Followed by the input file and the output file\n"
+			"      Followed by the input file path and the output file path\n"
 			"        --encode  -e    encoding mode\n"
 			"             or\n"
 			"        --decode  -d    decoding mode\n"
 			"    --key       -k      followed by keyfile\n"
 			"    --help      -h      show this help\n"
-			"    --progress  -p      progress indicator !not enabled in multithreaded mode\n"
+			"    --progress  -p      progress indicator !caution in multithreaded mode\n"
 			"    --thread    -t      followed by a number 1-4\n\n"
 			"Exemples:\n"
 			"    To encode a file:\n"
@@ -61,10 +61,10 @@ void help() {
  * on small files, 5 to 20% on large files
  * @NOTE: NOT IMPLEMENTED IN MUTLITHREADED WORKLOAD
  */
-void progress_indicator(long i, long filelen) {
-	filelen = filelen / 100;
-	if ((i % filelen) == 0) {
-		printf(" %ld%%\r", i/filelen);
+void progress_indicator(long i, long end) {
+	end = end / 100;
+	if ((i % end) == 0) {
+		printf(" %ld%%\r", i/end);
 		fflush(stdout);
 	}
 }
@@ -88,13 +88,15 @@ void* main_loop(void* structure) {
 						case 1:
 							args->buffer_output[i*2]   = encode_switch(quartet_1(args->buffer_input[i]));
 							args->buffer_output[i*2+1] = encode_switch(quartet_2(args->buffer_input[i]));
+							/*if (args->progress) {
+								progress_indicator(i, args->end);
+							}*/
 							break;
 						case 2:
 							args->buffer_output[i] = decode_switch(args->buffer_input[i*2]) + (decode_switch(args->buffer_input[i*2+1]) << 4);
-							break;
-						default:
-							printf("How did you even get here??\n");
-							pthread_exit(NULL);
+							/*if (args->progress) {
+								progress_indicator(i, args->end);
+							}*/
 							break;
 					}
 				}
@@ -122,10 +124,14 @@ void file_opener_and_writer(void* structure) {
 	 * or fails and print the help() and an error hint.
 	 */
 	input = fopen(arguments->input_file, "rb");
-	if (input) {
+	if (!input) {
+		printf("Input file \"%s\" not accessible.\nUse --help.\n", arguments->input_file);
+	} else {
 		remove(arguments->output_file);
 		output = fopen(arguments->output_file, "wb");
-		if (output) {
+		if (!output) {
+			printf("Output file \"%s\" not accessible.\nUse --help.\n", arguments->output_file);
+		} else {
 			/* 
 			 * Builds the buffers 
 			 * of the input and output files
@@ -177,9 +183,6 @@ void file_opener_and_writer(void* structure) {
 					
 					fwrite(args.buffer_output, sizeof(char), filelen / 2, output);
 					break;
-				default:
-					printf("How did you even get here??\n");
-					break;
 			}
 
 			/*
@@ -191,19 +194,13 @@ void file_opener_and_writer(void* structure) {
 			 * Close output file
 			 */
 			fclose(output);
-		} else {
-			printf("Wrong or no output file %s.\n", arguments->output_file);
-			help();
 		}
 		/*
 		 * Close input file
 		 */
 		fclose(input);
-	} else {
-		printf("Input file %s not found or not accessible.\n", arguments->input_file);
-		help();
 	}
-	if (arguments->progress) {
+	/*if (arguments->progress) {
 		printf("Done!\n");
-	}
+	}*/
 }
