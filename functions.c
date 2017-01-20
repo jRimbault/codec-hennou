@@ -58,7 +58,7 @@ void help() {
 /*
  * A simple progress indicator
  * it adds around *up* to 50% execution time
- * @NOTE: NOT IMPLEMENTED IN MUTLITHREADED WORKLOAD
+ * @NOTE: NOT `CORRECTLY` IMPLEMENTED IN MUTLITHREADED WORKLOAD
  */
 void progress_indicator(long i, long end) {
 	end = end / 100;
@@ -113,7 +113,7 @@ void* main_loop(void* structure) {
  */
 void file_opener_and_writer(void* structure) {
 	arguments* arguments = structure;
-	thread_args args;
+	thread_args args_t;
 	FILE* input;
 	FILE* output;
 	FILE* keyfile;
@@ -128,15 +128,15 @@ void file_opener_and_writer(void* structure) {
 		for (i = 0; i < 35; i++) {
 			keychar[i] = getc(keyfile);
 		}
-		args.matrix = (char *)malloc(4*sizeof(char));
+		args_t.matrix = (char *)malloc(4*sizeof(char));
 		for (j = 0; j < 4; j++) {
-			args.matrix[j] = 0;
+			args_t.matrix[j] = 0;
 			for (i = 0; i < 8; i++) {
 				if (keychar[i+(j*9)] == 49) {
-					args.matrix[j] = args.matrix[j] + pow(2, 7-i);
+					args_t.matrix[j] = args_t.matrix[j] + pow(2, 7-i);
 				}
 			}
-			// printf("%d\n", args.matrix[j]);
+			// printf("%d\n", args_t.matrix[j]);
 		}
 		fclose(keyfile);
 	} else {
@@ -160,16 +160,17 @@ void file_opener_and_writer(void* structure) {
 			 * Builds the buffers 
 			 * of the input and output files
 			 * Builds the threads arguments
+			 * Extremely reliant on the amount of free RAM
 			 */
 			fseek(input, 0, SEEK_END);
 			filelen             = ftell(input);
 			rewind(input);
-			args.buffer_input   = (char *)malloc((filelen + 1)*sizeof(char));
-			args.buffer_output  = (char *)malloc((filelen + 1)*sizeof(char)*2);
-			args.progress       = arguments->progress;
-			args.thread_num_arg = arguments->thread_num_arg;
-			args.operation      = arguments->operation;
-			fread(args.buffer_input, filelen, 1, input);
+			args_t.buffer_input   = (char *)malloc((filelen + 1)*sizeof(char));
+			args_t.buffer_output  = (char *)malloc((filelen + 1)*sizeof(char)*2);
+			args_t.progress       = arguments->progress;
+			args_t.thread_num_arg = arguments->thread_num_arg;
+			args_t.operation      = arguments->operation;
+			fread(args_t.buffer_input, filelen, 1, input);
 			
 			/*
 			 * Either encode or decode
@@ -179,42 +180,42 @@ void file_opener_and_writer(void* structure) {
 			switch(arguments->operation) {
 				case 1:
 					for(i = 0; i < NUM_THREADS; i++) {
-						args.end = filelen;
-						err = pthread_create(&(args.g_loops[i]), NULL, &main_loop, (void *)&args);
+						args_t.end = filelen;
+						err = pthread_create(&(args_t.g_loops[i]), NULL, &main_loop, (void *)&args_t);
 						if (err != 0) {
 							printf("Can't create thread :[%s]\n", strerror(err));
 						}
 					}
 
 					for(i = 0; i < NUM_THREADS; i++) {
-						pthread_join(args.g_loops[i], NULL);
+						pthread_join(args_t.g_loops[i], NULL);
 					}
 
-					fwrite(args.buffer_output, sizeof(char), filelen * 2, output);
+					fwrite(args_t.buffer_output, sizeof(char), filelen * 2, output);
 					break;
 				case 2:
 					for(i = 0; i < NUM_THREADS; i++) {
-						args.end = filelen / 2;
-						err = pthread_create(&(args.g_loops[i]), NULL, &main_loop, (void *)&args);
+						args_t.end = filelen / 2;
+						err = pthread_create(&(args_t.g_loops[i]), NULL, &main_loop, (void *)&args_t);
 						if (err != 0) {
 							printf("Can't create thread :[%s]\n", strerror(err));
 						}
 					}
 
 					for(i = 0; i < NUM_THREADS; i++) {
-						pthread_join(args.g_loops[i], NULL);
+						pthread_join(args_t.g_loops[i], NULL);
 					}
 					
-					fwrite(args.buffer_output, sizeof(char), filelen / 2, output);
+					fwrite(args_t.buffer_output, sizeof(char), filelen / 2, output);
 					break;
 			}
 
 			/*
 			 * Clear buffers
 			 */
-			free(args.buffer_input);
-			free(args.buffer_output);
-			free(args.matrix);
+			free(args_t.buffer_input);
+			free(args_t.buffer_output);
+			free(args_t.matrix);
 			/*
 			 * Close output file
 			 */

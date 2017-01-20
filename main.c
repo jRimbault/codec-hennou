@@ -5,7 +5,7 @@
  * @Description: projet de secu, encodage
  * programme original en python réécriture en C pour vitesse
  *
- * `gcc -O2 -lpthread main.c -o codec` pour compiler
+ * `gcc -O2 -lpthread -lm main.c -o codec` pour compiler
  * `-Wall` pour débug
  */
 
