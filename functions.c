@@ -51,14 +51,13 @@ void help() {
 			"    To decode the resulting file:\n"
 			"        codec -d file.jpg.c file.jpg -k key.txt\n\n"
 			"Made with ♥ by Jacques Rimbault and Neil Amari.\n"
-			"Note: the visible progress increases compute time by up to 40%%.\n"
+			"Note: the visible progress increases compute time by *up* to 50%%.\n"
 			);
 }
 
 /*
  * A simple progress indicator
- * it adds around 30 to 40% execution time
- * on small files, 5 to 20% on large files
+ * it adds around *up* to 50% execution time
  * @NOTE: NOT IMPLEMENTED IN MUTLITHREADED WORKLOAD
  */
 void progress_indicator(long i, long end) {
@@ -88,16 +87,16 @@ void* main_loop(void* structure) {
 						case 1:
 							args->buffer_output[i*2]   = encode_switch(quartet_1(args->buffer_input[i]), args->matrix);
 							args->buffer_output[i*2+1] = encode_switch(quartet_2(args->buffer_input[i]), args->matrix);
-							/*if (args->progress) {
+							if (args->progress) {
 								progress_indicator(i, args->end);
-							}*/
+							}
 							break;
 						case 2:
 							args->buffer_output[i] = decode_switch((args->buffer_input[i*2]), args->matrix);
 							args->buffer_output[i] = args->buffer_output[i] + (decode_switch(args->buffer_input[i*2+1], args->matrix) << 4);
-							/*if (args->progress) {
+							if (args->progress) {
 								progress_indicator(i, args->end);
-							}*/
+							}
 							break;
 					}
 				}
@@ -110,7 +109,7 @@ void* main_loop(void* structure) {
 /*
  * Opens the input and output files, creates buffers,
  * triggers the encode and decode loops
- * @TODO: add the parsing function of the key file in there
+ * @TODO: add a real parsing function of the key file in there
  */
 void file_opener_and_writer(void* structure) {
 	arguments* arguments = structure;
@@ -118,6 +117,7 @@ void file_opener_and_writer(void* structure) {
 	FILE* input;
 	FILE* output;
 	FILE* keyfile;
+	char  keychar[35];
 	long  filelen;
 	int   err, i, j;
 
@@ -125,18 +125,21 @@ void file_opener_and_writer(void* structure) {
 	keyfile = fopen(arguments->keyfile, "r");
 	if (keyfile) {      
 		fseek(keyfile, 5, SEEK_SET);
-		char keychar[35];
-		for (i = 0; (i < 35); i++)   {
+		for (i = 0; i < 35; i++) {
 			keychar[i] = getc(keyfile);
 		}
+		args.matrix = (char *)malloc(4*sizeof(char));
 		for (j = 0; j < 4; j++) {
 			args.matrix[j] = 0;
-			for (i = 7; i >= 0; i--) {
-				args.matrix[j] = args.matrix[j] + keychar[i+(j*9)] * pow(2, i);
+			for (i = 0; i < 8; i++) {
+				if (keychar[i+(j*9)] == 49) {
+					args.matrix[j] = args.matrix[j] + pow(2, 7-i);
+				}
 			}
+			// printf("%d\n", args.matrix[j]);
 		}
 	} else {
-		printf("Couldn't access key file.\n");
+		printf("Couldn't access key file. Use --help.\n");
 		return;
 	}
 	/*
@@ -210,6 +213,7 @@ void file_opener_and_writer(void* structure) {
 			 */
 			free(args.buffer_input);
 			free(args.buffer_output);
+			free(args.matrix);
 			/*
 			 * Close output file
 			 */
@@ -220,7 +224,7 @@ void file_opener_and_writer(void* structure) {
 		 */
 		fclose(input);
 	}
-	/*if (arguments->progress) {
+	if (arguments->progress) {
 		printf("Done!\n");
-	}*/
+	}
 }
