@@ -138,6 +138,7 @@ void file_opener_and_writer(void* structure) {
 			}
 			// printf("%d\n", args.matrix[j]);
 		}
+		fclose(keyfile);
 	} else {
 		printf("Couldn't access key file. Use --help.\n");
 		return;
