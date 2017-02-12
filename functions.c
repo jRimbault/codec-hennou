@@ -68,7 +68,7 @@ void progress_indicator(long i, long end) {
 	}
 }
 
-void* main_loop(void* structure) {
+void* threaded_worker(void* structure) {
 	thread_args* args = structure;
 	long i;
 	int  j;
@@ -87,17 +87,14 @@ void* main_loop(void* structure) {
 						case 1:
 							args->buffer_output[i*2]   = encode_switch(quartet_1(args->buffer_input[i]), args->matrix);
 							args->buffer_output[i*2+1] = encode_switch(quartet_2(args->buffer_input[i]), args->matrix);
-							if (args->progress) {
-								progress_indicator(i, args->end);
-							}
 							break;
 						case 2:
-							args->buffer_output[i] = decode_switch((args->buffer_input[i*2]), args->matrix);
-							args->buffer_output[i] = args->buffer_output[i] + (decode_switch(args->buffer_input[i*2+1], args->matrix) << 4);
-							if (args->progress) {
-								progress_indicator(i, args->end);
-							}
+							args->buffer_output[i]  =  decode_switch((args->buffer_input[i*2]), args->matrix);
+							args->buffer_output[i] += (decode_switch(args->buffer_input[i*2+1], args->matrix) << 4);
 							break;
+					}
+					if (args->progress) {
+						progress_indicator(i, args->end);
 					}
 				}
 			}
@@ -121,7 +118,18 @@ void file_opener_and_writer(void* structure) {
 	long  filelen;
 	int   err, i, j;
 
+	/*
+	 * Fake matrix for testing purposes
+	 */
+	// args_t.matrix = (char *)malloc(4*sizeof(char));
+	// args_t.matrix[0] = 0b10001111;
+	// args_t.matrix[1] = 0b11000111;
+	// args_t.matrix[2] = 0b10100100;
+	// args_t.matrix[3] = 0b10010010;
 
+	/*
+	 * Parses key file, create matrix
+	 */
 	keyfile = fopen(arguments->keyfile, "r");
 	if (keyfile) {      
 		fseek(keyfile, 5, SEEK_SET);
@@ -136,13 +144,13 @@ void file_opener_and_writer(void* structure) {
 					args_t.matrix[j] = args_t.matrix[j] + pow(2, 7-i);
 				}
 			}
-			// printf("%d\n", args_t.matrix[j]);
 		}
 		fclose(keyfile);
 	} else {
 		printf("Couldn't access key file. Use --help.\n");
 		return;
 	}
+
 	/*
 	 * Either successfully opens the input and output files,
 	 * or fails and print the help() and an error hint.
@@ -181,7 +189,7 @@ void file_opener_and_writer(void* structure) {
 				case 1:
 					for(i = 0; i < NUM_THREADS; i++) {
 						args_t.end = filelen;
-						err = pthread_create(&(args_t.g_loops[i]), NULL, &main_loop, (void *)&args_t);
+						err = pthread_create(&(args_t.g_loops[i]), NULL, &threaded_worker, (void *)&args_t);
 						if (err != 0) {
 							printf("Can't create thread :[%s]\n", strerror(err));
 						}
@@ -196,7 +204,7 @@ void file_opener_and_writer(void* structure) {
 				case 2:
 					for(i = 0; i < NUM_THREADS; i++) {
 						args_t.end = filelen / 2;
-						err = pthread_create(&(args_t.g_loops[i]), NULL, &main_loop, (void *)&args_t);
+						err = pthread_create(&(args_t.g_loops[i]), NULL, &threaded_worker, (void *)&args_t);
 						if (err != 0) {
 							printf("Can't create thread :[%s]\n", strerror(err));
 						}

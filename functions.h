@@ -23,7 +23,7 @@ void progress_indicator(long, long);
 /*
  * Loops on individual bytes
  */
-void* main_loop(void* arg);
+void* threaded_worker(void* arg);
 
 /*
  * Opens the input and output files, creates buffers,

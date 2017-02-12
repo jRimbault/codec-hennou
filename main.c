@@ -5,7 +5,7 @@
  * @Description: projet de secu, encodage
  * programme original en python réécriture en C pour vitesse
  *
- * `gcc -O2 -lpthread -lm main.c -o codec` pour compiler
+ * `gcc -lpthread -lm -O2 main.c -o codec`
  * `-Wall` pour débug
  */
 
@@ -30,6 +30,8 @@
  */
 int main(int argc, char** argv) {
 	arguments arguments;
+	int cpt;
+	cpt = argc;
 	/*
 	 * Parses the arguments
 	 * Checking if sane arguments were given
@@ -38,35 +40,35 @@ int main(int argc, char** argv) {
 	arguments.progress       = 0;
 	arguments.thread_num_arg = 1;
 	arguments.operation      = 0;
-	while(--argc) {
-		if (arg_is(argv[argc], "--progress", "-p")) {
+	while(--cpt) {
+		if (arg_is(argv[cpt], "--progress", "-p")) {
 			arguments.progress    = 1;
 		}
-		if (arg_is(argv[argc], "--thread", "-t")) {
-			arguments.thread_num_arg = atoi(argv[argc+1]);
+		if ((arg_is(argv[cpt], "--thread", "-t")) && (argc > cpt+1)) {
+			arguments.thread_num_arg = atoi(argv[cpt+1]);
 		}
-		if (arg_is(argv[argc], "--key", "-k")) {
-			arguments.keyfile     = argv[argc+1];
+		if ((arg_is(argv[cpt], "--key", "-k")) && (argc > cpt+1)) {
+			arguments.keyfile     = argv[cpt+1];
 		}
-		if (arg_is(argv[argc], "--encode", "-e")) {
+		if ((arg_is(argv[cpt], "--encode", "-e")) && (argc > cpt+2)) {
 			if (arguments.operation) {
 				printf("Invalid operation. Either 'encode' or 'decode'.\n");
 				return 1;
 			}
 			arguments.operation   = 1;
-			arguments.input_file  = argv[argc+1];
-			arguments.output_file = argv[argc+2];
+			arguments.input_file  = argv[cpt+1];
+			arguments.output_file = argv[cpt+2];
 		}
-		if (arg_is(argv[argc], "--decode", "-d")) {
+		if ((arg_is(argv[cpt], "--decode", "-d")) && (argc > cpt+2)) {
 			if (arguments.operation) {
 				printf("Invalid operation. Either 'encode' or 'decode'.\n");
 				return 1;
 			}
 			arguments.operation   = 2;
-			arguments.input_file  = argv[argc+1];
-			arguments.output_file = argv[argc+2];
+			arguments.input_file  = argv[cpt+1];
+			arguments.output_file = argv[cpt+2];
 		}
-		if (arg_is(argv[argc], "--help", "-h")) {
+		if (arg_is(argv[cpt], "--help", "-h")) {
 			help();
 			return 0;
 		}
