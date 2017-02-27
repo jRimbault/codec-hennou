@@ -1,10 +1,23 @@
 #!/bin/bash
 
-DIR="${BASH_SOURCE%/*}"
-if [[ ! -d "$DIR" ]]; then
-	DIR="$PWD"
-fi
-source "$DIR/colors_def.sh"
+NC='\033[0m' # No Color
+BLACK='\033[0;30m'
+
+GREY='\033[1;30m'
+LIGHT_GREY='\033[0;37m'
+RED='\033[0;31m'
+LIGHT_RED='\033[1;31m'
+GREEN='\033[0;32m'
+LIGHT_GREEN='\033[1;32m'
+ORANGE='\033[0;33m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+LIGHT_BLUE='\033[1;34m'
+PURPLE='\033[0;35m'
+LIGHT_PURPLE='\033[1;35m'
+CYAN='\033[0;36m'
+LIGHT_CYAN='\033[1;36m'
+WHITE='\033[1;37m'
 
 g_help() {
 	echo -e "This is a ${LIGHT_RED}wrapper script${NC} around ${GREEN}'codec'${NC}, the main program."
