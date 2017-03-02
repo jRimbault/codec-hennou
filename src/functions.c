@@ -80,11 +80,11 @@ void progress_indicator(long i, long end) {
  * This the threaded function
  * It splits tasks between threads
  * @param structure containing several arguments:
- *   > g_loops  array containing thread's id
- *   > end      end of the input buffer
- *   > buffer_input
- *   > buffer_output
- *   > matrix   array key matrix
+ *   > g_loops        array containing thread's id
+ *   > end            end of the input buffer
+ *   > buffer_input   reading buffer
+ *   > buffer_output  writing buffer
+ *   > matrix         array key matrix
  */
 void* threaded_worker(void* structure) {
 	thread_args* args = structure;
