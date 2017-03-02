@@ -19,6 +19,11 @@ CYAN='\033[0;36m'
 LIGHT_CYAN='\033[1;36m'
 WHITE='\033[1;37m'
 
+DIR="${BASH_SOURCE%/*}"
+if [[ ! -d "$DIR" ]]; then
+	DIR="$PWD"
+fi
+
 g_help() {
 	echo -e "This is a ${LIGHT_RED}wrapper script${NC} around ${GREEN}'codec'${NC}, the main program."
 	echo -e "It will measure the encode and decode time of the program,"
@@ -36,14 +41,14 @@ g_help() {
 encoding() {
 	echo -e "${YELLOW}Encoding${NC} $1 into $2..."
 	time {
-		codec -e $1 $2 -k $4
+		$DIR/codec -e $1 $2 -k $4
 	}
 }
 
 decoding() {
 	echo -e "${YELLOW}Decoding${NC} $2 into $3..."
 	time {
-		codec -d $2 $3 -k $4
+		$DIR/codec -d $2 $3 -k $4
 	}
 }
 
