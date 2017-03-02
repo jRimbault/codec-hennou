@@ -1,7 +1,7 @@
 /**
  * @Author: jRimbault nAmari
  * @Date:   2017-01-09 14:16:04
- * @Last Modified by:   jRimbault
+ * @Last Modified by:   erelde
  * @Description: 
  */
 
@@ -42,7 +42,7 @@ char quartet_2(char c) {
 
 /*
  * Receives a half byte (4bits) and returns the corresponding encoded byte
- * @NOTE: ^ is the xor operator
+ * @Note: ^ is the xor operator
  */
 char encode_switch(char c, char* matrix) {
 	// char matrix[4] = {0b10001111, 0b11000111, 0b10100100, 0b10010010};
@@ -93,7 +93,7 @@ char encode_switch(char c, char* matrix) {
  * The only way to speed things up here would be statistical analysis of
  * the frequency of the different cases, I'm betting it would not bring any
  * major improvement and the distribution would be about even for all cases
- * @NOTE: ^ is the xor operator
+ * @Note: ^ is the xor operator
  */
 char decode_switch(char c, char* matrix) {
 	// char matrix[4] = {0b10001111, 0b11000111, 0b10100100, 0b10010010};

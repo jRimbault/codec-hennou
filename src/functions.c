@@ -1,7 +1,7 @@
 /**
  * @Author: jRimbault nAmari
  * @Date:   2017-01-08 22:00:10
- * @Last Modified by:   jRimbault
+ * @Last Modified by:   erelde
  * @Description:
  */
 
@@ -20,8 +20,13 @@
 #include "switches.h"
 #endif
 
-/*
+/**
  * Function to check arguments
+ * @param  given_arg string received
+ * @param  long_arg  1st string it's compared to
+ * @param  short_arg 2nd string it's compared to
+ * @return           returns 1 if received string is either the 1st or 2nd,
+ *                   else it returns 0 
  */
 int arg_is(char* given_arg,char* long_arg, char* short_arg) {
 	if ((!strcmp(given_arg, long_arg)) || (!strcmp(given_arg, short_arg))) {
@@ -29,7 +34,8 @@ int arg_is(char* given_arg,char* long_arg, char* short_arg) {
 	}
 	return 0;
 }
-/*
+
+/**
  * Help triggered if asked or if wrong arguments were given.
  */
 void help() {
@@ -55,10 +61,12 @@ void help() {
 			);
 }
 
-/*
+/**
  * A simple progress indicator
  * it adds around *up* to 50% execution time
- * @NOTE: NOT `CORRECTLY` IMPLEMENTED IN MUTLITHREADED WORKLOAD
+ * @param i   current step
+ * @param end maximum
+ * @Note: Not 'correctly' implemented in multithreaded workload
  */
 void progress_indicator(long i, long end) {
 	end = end / 100;
@@ -68,6 +76,16 @@ void progress_indicator(long i, long end) {
 	}
 }
 
+/**
+ * This the threaded function
+ * It splits tasks between threads
+ * @param structure containing several arguments:
+ *   > g_loops  array containing thread's id
+ *   > end      end of the input buffer
+ *   > buffer_input
+ *   > buffer_output
+ *   > matrix   array key matrix
+ */
 void* threaded_worker(void* structure) {
 	thread_args* args = structure;
 	long i;
@@ -103,10 +121,16 @@ void* threaded_worker(void* structure) {
 	pthread_exit(NULL);
 }
 
-/*
+/**
  * Opens the input and output files, creates buffers,
  * triggers the encode and decode loops
- * @TODO: add a real parsing function of the key file in there
+ * @param structure containing several arguments:
+ *   > input_file      name
+ *   > output_file     name
+ *   > keyfile         name
+ *   > operation       1 or 2 (encode or decode)
+ *   > progress        display progress indicator or not (1 or 0)
+ *   > thread_num_arg  number of threads
  */
 void file_opener_and_writer(void* structure) {
 	arguments* arguments = structure;
@@ -117,15 +141,6 @@ void file_opener_and_writer(void* structure) {
 	char  keychar[35];
 	long  filelen;
 	int   err, i, j;
-
-	/*
-	 * Fake matrix for testing purposes
-	 */
-	// args_t.matrix = (char *)malloc(4*sizeof(char));
-	// args_t.matrix[0] = 0b10001111;
-	// args_t.matrix[1] = 0b11000111;
-	// args_t.matrix[2] = 0b10100100;
-	// args_t.matrix[3] = 0b10010010;
 
 	/*
 	 * Parses key file, create matrix
