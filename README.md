@@ -1,13 +1,13 @@
 # Projet "encodage"
 
-Encodage décodage fichier 2Go en moins de 30s.
 
 Pour tester:
 ```sh
 cd build
-dd if=/dev/urandom of=random.dat  bs=1M  count=2048 # génère fichier aléatoire de 2Go
+dd if=/dev/urandom of=random.dat  bs=1M  count=1024 # génère fichier aléatoire de 1Go
 cmake .
 make
 ./codec --help
 ```
 
+[![asciicast](https://asciinema.org/a/7gpuugdqxzplow2vk4n8vgml5.png)](https://asciinema.org/a/7gpuugdqxzplow2vk4n8vgml5)
