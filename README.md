@@ -10,4 +10,4 @@ make
 ./codec --help
 ```
 
-[![asciicast](https://asciinema.org/a/7gpuugdqxzplow2vk4n8vgml5.png)](https://asciinema.org/a/7gpuugdqxzplow2vk4n8vgml5)
+[![asciicast](https://asciinema.org/a/7gpuugdqxzplow2vk4n8vgml5.png)](https://asciinema.org/a/7gpuugdqxzplow2vk4n8vgml5?speed=3)
