@@ -26,7 +26,7 @@
  * @param  long_arg  1st string it's compared to
  * @param  short_arg 2nd string it's compared to
  * @return           returns 1 if received string is either the 1st or 2nd,
- *                   else it returns 0 
+ *                   else it returns 0
  */
 int arg_is(char* given_arg,char* long_arg, char* short_arg) {
 	if ((!strcmp(given_arg, long_arg)) || (!strcmp(given_arg, short_arg))) {
@@ -94,7 +94,7 @@ void* threaded_worker(void* structure) {
 	for (j = 0; j < NUM_THREADS; j++) {
 		/*
 		 * This pthread_equal could could be the only `if`,
-		 * in place of the modulo check, but a pthread_equal 
+		 * in place of the modulo check, but a pthread_equal
 		 * costs more time than an modulo check, so performing it only NUM_THREADS times
 		 * instead of (args->end) times is better
 		 */
@@ -146,7 +146,7 @@ void file_opener_and_writer(void* structure) {
 	 * Parses key file, create matrix
 	 */
 	keyfile = fopen(arguments->keyfile, "r");
-	if (keyfile) {      
+	if (keyfile) {
 		fseek(keyfile, 5, SEEK_SET);
 		for (i = 0; i < 35; i++) {
 			keychar[i] = getc(keyfile);
@@ -179,8 +179,8 @@ void file_opener_and_writer(void* structure) {
 		if (!output) {
 			printf("Output file \"%s\" not accessible.\nUse --help.\n", arguments->output_file);
 		} else {
-			/* 
-			 * Builds the buffers 
+			/*
+			 * Builds the buffers
 			 * of the input and output files
 			 * Builds the threads arguments
 			 * Extremely reliant on the amount of free RAM
@@ -193,8 +193,8 @@ void file_opener_and_writer(void* structure) {
 			args_t.progress       = arguments->progress;
 			args_t.thread_num_arg = arguments->thread_num_arg;
 			args_t.operation      = arguments->operation;
-			fread(args_t.buffer_input, filelen, 1, input);
-			
+			if(!fread(args_t.buffer_input, filelen, 1, input)) exit(1);
+
 			/*
 			 * Either encode or decode
 			 * 1 -> encode
@@ -228,7 +228,7 @@ void file_opener_and_writer(void* structure) {
 					for(i = 0; i < NUM_THREADS; i++) {
 						pthread_join(args_t.g_loops[i], NULL);
 					}
-					
+
 					fwrite(args_t.buffer_output, sizeof(char), filelen / 2, output);
 					break;
 			}

@@ -9,5 +9,10 @@ cmake .
 make
 ./codec --help
 ```
+Ou, plus simplement:
+```sh
+make bench
+```
 
-[![asciicast](https://asciinema.org/a/0zukum9m10u2ty3klnlg4sdky.png)](https://asciinema.org/a/0zukum9m10u2ty3klnlg4sdky?speed=3)
+
+[![asciicast](https://asciinema.org/a/85yFfN4KBtwVc6reBgQU8J2Nn.png)](https://asciinema.org/a/85yFfN4KBtwVc6reBgQU8J2Nn)
