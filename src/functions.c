@@ -186,10 +186,17 @@ void file_opener_and_writer(void* structure) {
 			 * Extremely reliant on the amount of free RAM
 			 */
 			fseek(input, 0, SEEK_END);
-			filelen             = ftell(input);
+			filelen = ftell(input);
 			rewind(input);
-			args_t.buffer_input   = (char *)malloc((filelen + 1)*sizeof(char));
-			args_t.buffer_output  = (char *)malloc((filelen + 1)*sizeof(char)*2);
+			args_t.buffer_input = (char *)malloc((filelen + 1)*sizeof(char));
+
+			if (arguments->operation == 1) {
+				args_t.buffer_output = (char *)malloc((filelen + 1)*sizeof(char)*2);
+			}
+			if (arguments->operation == 2) {
+				args_t.buffer_output = (char *)malloc((filelen + 1)*sizeof(char)/2);
+			}
+
 			args_t.progress       = arguments->progress;
 			args_t.thread_num_arg = arguments->thread_num_arg;
 			args_t.operation      = arguments->operation;
