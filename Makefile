@@ -1,7 +1,7 @@
 # Compiler
 CC=gcc
 # Flags
-CFLAGS=-Wall -lpthread -lm -O2
+CFLAGS=-Wall -lpthread -lm -O3
 # OBJECTS
 OBJECTS=src/main.c
 
@@ -12,9 +12,9 @@ codec :
 	@echo " › Codec built"
 
 bench : codec
-	@./bench.sh -f 64 -s
-	@./bench.sh -f 512 -s
-	@./bench.sh -f 1024
+	@./bench.sh -f 64 -s -i
+	@./bench.sh -f 512 -s -i
+	@./bench.sh -f 1024 -i
 
 # Clean
 clean :

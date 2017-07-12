@@ -51,45 +51,91 @@ parse_args() {
       "-s"|"--sep")
         separator=true
         ;;
+      "-i"|"--interactive")
+        is=true
+        ;;
     esac
     shift
   done
 }
 
+readonly spin='-\|/'
+
+spin() {
+  local pid
+  local msg
+  local i
+  pid=$1
+  msg="$2"
+  i=0
+  while kill -0 "$pid" 2>/dev/null; do
+    i=$(( (i+1) %4 ))
+    printf "\r%s [%s]" "$msg" "${spin:$i:1}"
+    sleep .1
+  done
+  printf "\r%s     \n" "$msg"
+}
+
 encoding() {
-  echo "Encoding..."
+  local pid
+  if [[ "$is" != true ]]; then
+    echo "Encoding..."
+  fi
   {
     time {
       "$binary" -e "$original" "$encoded" -k "$key"
     }
-  } &> "$tmp"
+  } &> "$tmp" &
+  pid=$!
+  if [[ "$is" = true ]]; then
+    spin $pid "Encoding..."
+  fi
+  wait "$pid"
   echo " › $(grep real "$tmp" | cut -f2)"
 }
 
 decoding() {
-  echo "Decoding..."
+  local pid
+  if [[ "$is" != true ]]; then
+    echo "Decoding..."
+  fi
   {
     time {
       "$binary" -d "$encoded" "$decoded" -k "$key"
     }
-  } &> "$tmp"
+  } &> "$tmp" &
+  pid=$!
+  if [[ "$is" = true ]]; then
+    spin $pid "Decoding..."
+  fi
+  wait "$pid"
   echo " › $(grep real "$tmp" | cut -f2)"
 }
 
 main() {
+  local pid
+  local msg
   if (( size > 1023 )); then
-    echo "Making a $(python -c "print(round($size/1024, 2))") Go file..."
+    msg="Making a $(python -c "print(round($size/1024, 2))") Go file..."
   else
-    echo "Making a $size Mo file..."
+    msg="Making a $size Mo file..."
   fi
-  dd if=/dev/urandom of="$original"  bs=1M  count="$size" > /dev/null 2>&1
+  if [[ "$is" != true ]]; then
+    echo "$msg"
+  fi
+  dd if=/dev/urandom of="$original"  bs=1M  count="$size" > /dev/null 2>&1 &
+  pid=$!
+  if [[ "$is" = true ]]; then
+    spin $pid "$msg"
+  fi
+  wait "$pid"
   echo " › Done"
 
   encoding
   decoding
 
   echo "Comparing md5sum signature:"
-  md5sum "$original" "$encoded" "$decoded"
+  md5sum "$original" "$decoded"
   echo "Comparing file size:"
   du -b "$original" "$decoded"
   if [[ "$separator" = true ]]; then

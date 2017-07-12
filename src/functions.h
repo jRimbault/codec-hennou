@@ -2,7 +2,7 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-08 21:59:30
  * @Last Modified by:   jRimbault
- * @Description: 
+ * @Description:
  */
 
 #include "functions.c"
@@ -24,6 +24,11 @@ void progress_indicator(long, long);
  * Loops on individual bytes
  */
 void* threaded_worker(void* arg);
+
+/**
+ * Read the matrix file and return the matrix
+ */
+char* matrix(char* filename);
 
 /*
  * Opens the input and output files, creates buffers,

@@ -122,6 +122,44 @@ void* threaded_worker(void* structure) {
 }
 
 /**
+ * Parses key file, create matrix
+ *
+ * @param  filename file containing the matrix
+ *
+ * @return          matrix G4C
+ */
+char* matrix(char* filename) {
+	FILE* keyfile;
+	char* matrix;
+	char  keychar[35];
+	int i, j;
+
+	keyfile = fopen(filename, "r");
+	if (keyfile) {
+		fseek(keyfile, 5, SEEK_SET);
+		for (i = 0; i < 35; i++) {
+			keychar[i] = getc(keyfile);
+		}
+		matrix = (char *)malloc(4*sizeof(char));
+		for (j = 0; j < 4; j++) {
+			matrix[j] = 0;
+			for (i = 0; i < 8; i++) {
+				// 48 = 0 ascii
+				// 49 = 1 ascii
+				if (keychar[i+(j*9)] == 49) {
+					matrix[j] = matrix[j] + pow(2, 7-i);
+				}
+			}
+		}
+		return matrix;
+		fclose(keyfile);
+	} else {
+		printf("Couldn't access key file. Use --help.\n");
+		exit(10);
+	}
+}
+
+/**
  * Opens the input and output files, creates buffers,
  * triggers the encode and decode loops
  * @param structure containing several arguments:
@@ -137,34 +175,13 @@ void file_opener_and_writer(void* structure) {
 	thread_args args_t;
 	FILE* input;
 	FILE* output;
-	FILE* keyfile;
-	char  keychar[35];
 	long  filelen;
-	int   err, i, j;
+	int   err, i;
 
 	/*
 	 * Parses key file, create matrix
 	 */
-	keyfile = fopen(arguments->keyfile, "r");
-	if (keyfile) {
-		fseek(keyfile, 5, SEEK_SET);
-		for (i = 0; i < 35; i++) {
-			keychar[i] = getc(keyfile);
-		}
-		args_t.matrix = (char *)malloc(4*sizeof(char));
-		for (j = 0; j < 4; j++) {
-			args_t.matrix[j] = 0;
-			for (i = 0; i < 8; i++) {
-				if (keychar[i+(j*9)] == 49) {
-					args_t.matrix[j] = args_t.matrix[j] + pow(2, 7-i);
-				}
-			}
-		}
-		fclose(keyfile);
-	} else {
-		printf("Couldn't access key file. Use --help.\n");
-		return;
-	}
+	args_t.matrix = matrix(arguments->keyfile);
 
 	/*
 	 * Either successfully opens the input and output files,
@@ -207,37 +224,35 @@ void file_opener_and_writer(void* structure) {
 			 * 1 -> encode
 			 * 2 -> decode
 			 */
-			switch(arguments->operation) {
-				case 1:
-					for(i = 0; i < NUM_THREADS; i++) {
-						args_t.end = filelen;
-						err = pthread_create(&(args_t.g_loops[i]), NULL, &threaded_worker, (void *)&args_t);
-						if (err != 0) {
-							printf("Can't create thread :[%s]\n", strerror(err));
-						}
+			if (arguments->operation == 1) {
+				for(i = 0; i < NUM_THREADS; i++) {
+					args_t.end = filelen;
+					err = pthread_create(&(args_t.g_loops[i]), NULL, &threaded_worker, (void *)&args_t);
+					if (err != 0) {
+						printf("Can't create thread :[%s]\n", strerror(err));
 					}
+				}
 
-					for(i = 0; i < NUM_THREADS; i++) {
-						pthread_join(args_t.g_loops[i], NULL);
+				for(i = 0; i < NUM_THREADS; i++) {
+					pthread_join(args_t.g_loops[i], NULL);
+				}
+
+				fwrite(args_t.buffer_output, sizeof(char), filelen * 2, output);
+			}
+			if (arguments->operation == 2) {
+				for(i = 0; i < NUM_THREADS; i++) {
+					args_t.end = filelen / 2;
+					err = pthread_create(&(args_t.g_loops[i]), NULL, &threaded_worker, (void *)&args_t);
+					if (err != 0) {
+						printf("Can't create thread :[%s]\n", strerror(err));
 					}
+				}
 
-					fwrite(args_t.buffer_output, sizeof(char), filelen * 2, output);
-					break;
-				case 2:
-					for(i = 0; i < NUM_THREADS; i++) {
-						args_t.end = filelen / 2;
-						err = pthread_create(&(args_t.g_loops[i]), NULL, &threaded_worker, (void *)&args_t);
-						if (err != 0) {
-							printf("Can't create thread :[%s]\n", strerror(err));
-						}
-					}
+				for(i = 0; i < NUM_THREADS; i++) {
+					pthread_join(args_t.g_loops[i], NULL);
+				}
 
-					for(i = 0; i < NUM_THREADS; i++) {
-						pthread_join(args_t.g_loops[i], NULL);
-					}
-
-					fwrite(args_t.buffer_output, sizeof(char), filelen / 2, output);
-					break;
+				fwrite(args_t.buffer_output, sizeof(char), filelen / 2, output);
 			}
 
 			/*
