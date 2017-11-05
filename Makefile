@@ -7,9 +7,9 @@ OBJECTS=src/main.c
 
 
 codec :
-	@echo "Building codec..."
-	@$(CC) $(OBJECTS) $(CFLAGS) -o codec
-	@echo " › Codec built"
+	@echo "Building $@..."
+	@$(CC) $(OBJECTS) $(CFLAGS) -o $@
+	@echo " › $@ built"
 
 bench : codec
 	@./bench.sh -f 64 -s -i
