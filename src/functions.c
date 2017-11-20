@@ -28,7 +28,8 @@
  * @return           returns 1 if received string is either the 1st or 2nd,
  *                   else it returns 0
  */
-int arg_is(char* given_arg,char* long_arg, char* short_arg) {
+int arg_is(char* given_arg,char* long_arg, char* short_arg)
+{
 	if ((!strcmp(given_arg, long_arg)) || (!strcmp(given_arg, short_arg))) {
 		return 1;
 	}
@@ -38,7 +39,8 @@ int arg_is(char* given_arg,char* long_arg, char* short_arg) {
 /**
  * Help triggered if asked or if wrong arguments were given.
  */
-void help() {
+void help()
+{
 	printf("Usage: codec [--mode inputfile outputfile] [--progress] [--thread 1-4] [--key keyfile] [--help]\n\n"
 			"Encode or decode any file with a G4C key.\n\n"
 			"Options:\n"
@@ -68,7 +70,8 @@ void help() {
  * @param end maximum
  * @Note: Not 'correctly' implemented in multithreaded workload
  */
-void progress_indicator(long i, long end) {
+void progress_indicator(long i, long end)
+{
 	end = end / 100;
 	if ((i % end) == 0) {
 		printf(" %ld%%\r", i/end);
@@ -76,8 +79,18 @@ void progress_indicator(long i, long end) {
 	}
 }
 
+/** To find the thread index, [0|1|2|3] */
+int get_thread_index(pthread_t* loops)
+{
+	for (int j = 0; j < NUM_THREADS; j++) {
+		if (pthread_equal(pthread_self(), loops[j])) {
+			return j;
+		}
+	}
+	return -1;
+}
 /**
- * This the threaded function
+ * Those are the thread worker functions
  * It splits tasks between threads
  * @param structure containing several arguments:
  *   > g_loops        array containing thread's id
@@ -86,41 +99,41 @@ void progress_indicator(long i, long end) {
  *   > buffer_output  writing buffer
  *   > matrix         array key matrix
  */
-void* threaded_worker(void* structure) {
+void* worker_encoder(void* structure)
+{
 	thread_args* args = structure;
-	long i;
-	int  j;
+	int thread = get_thread_index(args->g_loops);
+	if (thread < 0) { exit(30); }
 
-	for (j = 0; j < NUM_THREADS; j++) {
-		/*
-		 * This pthread_equal could could be the only `if`,
-		 * in place of the modulo check, but a pthread_equal
-		 * costs more time than an modulo check, so performing it only NUM_THREADS times
-		 * instead of (args->end) times is better
-		 */
-		if (pthread_equal(pthread_self(), args->g_loops[j])) {
-			for (i = 0; i < args->end; i++) {
-				if (i % NUM_THREADS == j) {
-					switch(args->operation) {
-						case 1:
-							args->buffer_output[i*2]   = encode_switch(quartet_1(args->buffer_input[i]), args->matrix);
-							args->buffer_output[i*2+1] = encode_switch(quartet_2(args->buffer_input[i]), args->matrix);
-							break;
-						case 2:
-							args->buffer_output[i]  =  decode_switch((args->buffer_input[i*2]), args->matrix);
-							args->buffer_output[i] += (decode_switch(args->buffer_input[i*2+1], args->matrix) << 4);
-							break;
-					}
-					if (args->progress) {
-						progress_indicator(i, args->end);
-					}
-				}
-			}
-		}
+	for (long i = thread; i < args->end; i += NUM_THREADS) {
+		args->buffer_output[i*2]   = encode_switch(quartet_1(args->buffer_input[i]), args->matrix);
+		args->buffer_output[i*2+1] = encode_switch(quartet_2(args->buffer_input[i]), args->matrix);
 	}
+
 	pthread_exit(NULL);
 }
+void* worker_decoder(void* structure)
+{
+	thread_args* args = structure;
+	int thread = get_thread_index(args->g_loops);
+	if (thread < 0) { exit(30); }
 
+	for (long i = thread; i < args->end; i += NUM_THREADS) {
+			args->buffer_output[i]
+				= decode_switch((args->buffer_input[i*2]), args->matrix)
+				+ (decode_switch(args->buffer_input[i*2+1], args->matrix) << 4);
+	}
+
+	pthread_exit(NULL);
+}
+/** I don't want to get a double, so here's my own pow function */
+int pow_int(int n, int p)
+{
+	if (p > 1) {
+		return n * pow_int(n, p - 1);
+	}
+	return n;
+}
 /**
  * Parses key file, create matrix
  *
@@ -128,35 +141,36 @@ void* threaded_worker(void* structure) {
  *
  * @return          matrix G4C
  */
-char* matrix(char* filename) {
+char* matrix(char* filename)
+{
 	FILE* keyfile;
 	char* matrix;
 	char  keychar[35];
 	int i, j;
 
 	keyfile = fopen(filename, "r");
-	if (keyfile) {
-		fseek(keyfile, 5, SEEK_SET);
-		for (i = 0; i < 35; i++) {
-			keychar[i] = getc(keyfile);
-		}
-		matrix = (char *)malloc(4*sizeof(char));
-		for (j = 0; j < 4; j++) {
-			matrix[j] = 0;
-			for (i = 0; i < 8; i++) {
-				// 48 = 0 ascii
-				// 49 = 1 ascii
-				if (keychar[i+(j*9)] == 49) {
-					matrix[j] = matrix[j] + pow(2, 7-i);
-				}
-			}
-		}
-		return matrix;
-		fclose(keyfile);
-	} else {
+	if (!keyfile) {
 		printf("Couldn't access key file. Use --help.\n");
 		exit(10);
 	}
+
+	fseek(keyfile, 5, SEEK_SET);
+	for (i = 0; i < 35; i++) {
+		keychar[i] = getc(keyfile);
+	}
+	matrix = malloc(4 * sizeof(char));
+	for (j = 0; j < 4; j++) {
+		matrix[j] = 0;
+		for (i = 0; i < 8; i++) {
+			// 48 = 0 ascii
+			// 49 = 1 ascii
+			if (keychar[i+(j*9)] == 49) {
+				matrix[j] += pow_int(2, 7-i);
+			}
+		}
+	}
+	fclose(keyfile);
+	return matrix;
 }
 
 /**
@@ -170,7 +184,8 @@ char* matrix(char* filename) {
  *   > progress        display progress indicator or not (1 or 0)
  *   > thread_num_arg  number of threads
  */
-void file_opener_and_writer(void* structure) {
+void file_opener_and_writer(void* structure)
+{
 	arguments* arguments = structure;
 	thread_args args_t;
 	FILE* input;
@@ -190,88 +205,78 @@ void file_opener_and_writer(void* structure) {
 	input = fopen(arguments->input_file, "rb");
 	if (!input) {
 		printf("Input file \"%s\" not accessible.\nUse --help.\n", arguments->input_file);
-	} else {
-		remove(arguments->output_file);
-		output = fopen(arguments->output_file, "wb");
-		if (!output) {
-			printf("Output file \"%s\" not accessible.\nUse --help.\n", arguments->output_file);
-		} else {
-			/*
-			 * Builds the buffers
-			 * of the input and output files
-			 * Builds the threads arguments
-			 * Extremely reliant on the amount of free RAM
-			 */
-			fseek(input, 0, SEEK_END);
-			filelen = ftell(input);
-			rewind(input);
-			args_t.buffer_input = (char *)malloc((filelen + 1)*sizeof(char));
+		exit(25);
+	}
+	/*
+	 * Builds the buffers
+	 * of the input and output files
+	 * Builds the threads arguments
+	 * Extremely reliant on the amount of free RAM
+	 */
+	fseek(input, 0, SEEK_END);
+	filelen = ftell(input);
+	rewind(input);
+	args_t.buffer_input = malloc(filelen * sizeof(char));
 
-			if (arguments->operation == 1) {
-				args_t.buffer_output = (char *)malloc((filelen + 1)*sizeof(char)*2);
+	args_t.progress       = arguments->progress;
+	args_t.thread_num_arg = arguments->thread_num_arg;
+	args_t.operation      = arguments->operation;
+	/** Reads whole file into buffer_input */
+	if(!fread(args_t.buffer_input, filelen, 1, input)) { exit(1); }
+	fclose(input);
+
+	/*
+	 * Either encode or decode
+	 * 1 -> encode
+	 * 2 -> decode
+	 */
+	if (arguments->operation == 1) {
+		args_t.end = filelen;
+		args_t.buffer_output = malloc((filelen * 2) * sizeof(char));
+		for(i = 0; i < NUM_THREADS; i++) {
+			err = pthread_create(&args_t.g_loops[i], NULL, &worker_encoder, &args_t);
+			if (err != 0) {
+				printf("Can't create thread :[%s]\n", strerror(err));
 			}
-			if (arguments->operation == 2) {
-				args_t.buffer_output = (char *)malloc((filelen + 1)*sizeof(char)/2);
-			}
-
-			args_t.progress       = arguments->progress;
-			args_t.thread_num_arg = arguments->thread_num_arg;
-			args_t.operation      = arguments->operation;
-			if(!fread(args_t.buffer_input, filelen, 1, input)) exit(1);
-
-			/*
-			 * Either encode or decode
-			 * 1 -> encode
-			 * 2 -> decode
-			 */
-			if (arguments->operation == 1) {
-				for(i = 0; i < NUM_THREADS; i++) {
-					args_t.end = filelen;
-					err = pthread_create(&(args_t.g_loops[i]), NULL, &threaded_worker, (void *)&args_t);
-					if (err != 0) {
-						printf("Can't create thread :[%s]\n", strerror(err));
-					}
-				}
-
-				for(i = 0; i < NUM_THREADS; i++) {
-					pthread_join(args_t.g_loops[i], NULL);
-				}
-
-				fwrite(args_t.buffer_output, sizeof(char), filelen * 2, output);
-			}
-			if (arguments->operation == 2) {
-				for(i = 0; i < NUM_THREADS; i++) {
-					args_t.end = filelen / 2;
-					err = pthread_create(&(args_t.g_loops[i]), NULL, &threaded_worker, (void *)&args_t);
-					if (err != 0) {
-						printf("Can't create thread :[%s]\n", strerror(err));
-					}
-				}
-
-				for(i = 0; i < NUM_THREADS; i++) {
-					pthread_join(args_t.g_loops[i], NULL);
-				}
-
-				fwrite(args_t.buffer_output, sizeof(char), filelen / 2, output);
-			}
-
-			/*
-			 * Clear buffers
-			 */
-			free(args_t.buffer_input);
-			free(args_t.buffer_output);
-			free(args_t.matrix);
-			/*
-			 * Close output file
-			 */
-			fclose(output);
 		}
-		/*
-		 * Close input file
-		 */
-		fclose(input);
 	}
-	if (arguments->progress) {
-		printf("Done!\n");
+	if (arguments->operation == 2) {
+		args_t.end = filelen / 2;
+		args_t.buffer_output = malloc((filelen / 2) * sizeof(char));
+		for(i = 0; i < NUM_THREADS; i++) {
+			err = pthread_create(&args_t.g_loops[i], NULL, &worker_decoder, &args_t);
+			if (err != 0) {
+				printf("Can't create thread :[%s]\n", strerror(err));
+			}
+		}
 	}
+
+	for(i = 0; i < NUM_THREADS; i++) {
+		pthread_join(args_t.g_loops[i], NULL);
+	}
+
+	/** Deletes the output file to overwrite it */
+	// remove(arguments->output_file);
+	output = fopen(arguments->output_file, "wb");
+	if (!output) {
+		printf("Output file \"%s\" not accessible.\nUse --help.\n", arguments->output_file);
+		exit(25);
+	}
+	fwrite(
+		args_t.buffer_output,
+		sizeof(char),
+		arguments->operation == 1 ? filelen * 2 : filelen / 2,
+		output
+	);
+
+	/*
+	 * Clear buffers
+	 */
+	free(args_t.buffer_input);
+	free(args_t.buffer_output);
+	free(args_t.matrix);
+	/*
+	 * Close output file
+	 */
+	fclose(output);
 }

@@ -12,9 +12,9 @@ codec :
 	@echo " › $@ built"
 
 bench : codec
-	@./bench.sh -f 64 -s -i
-	@./bench.sh -f 512 -s -i
-	@./bench.sh -f 1024 -i
+	@./bench.sh -f 64 -s
+	@./bench.sh -f 512 -s
+	@./bench.sh -f 1024
 
 # Clean
 clean :
