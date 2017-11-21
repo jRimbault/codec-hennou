@@ -2,23 +2,8 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-09 14:16:04
  * @Last Modified by:   erelde
- * @Description: 
+ * @Description:
  */
-
-#ifndef HEADER
-#define HEADER
-#include "header.h"
-#endif
-
-#ifndef FUNCTIONS
-#define FUNCTIONS
-#include "functions.h"
-#endif
-
-#ifndef SWITCHES
-#define SWITCHES
-#include "switches.h"
-#endif
 
 /*
  * Right 4bits
@@ -80,7 +65,7 @@ char encode_switch(char c, char* matrix) {
 		case 0b1111: /* 15 */
 			return (matrix[0] ^ matrix[1] ^ matrix[2] ^ matrix[3]);
 		default:
-			/* 
+			/*
 			 * Shouldn't ever be triggered since all
 			 * possible combinations of 4bits have been made. 0-15
 			 */
@@ -130,7 +115,7 @@ char decode_switch(char c, char* matrix) {
 	} else if (c == (matrix[0] ^ matrix[1] ^ matrix[2] ^ matrix[3])) {
 		return 0b1111;
 	} else {
-		/* 
+		/*
 		 * Shouldn't ever be triggered since all
 		 * possible combinations of 4bits have been made. 0-15
 		 */

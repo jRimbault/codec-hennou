@@ -2,10 +2,11 @@
  * @Author: jRimbault nAmari
  * @Date:   2017-01-09 14:16:04
  * @Last Modified by:   jRimbault
- * @Description: 
+ * @Description:
  */
 
-#include "switches.c"
+#ifndef _SWITCHES_H
+#define _SWITCHES_H
 
 /*
  * Left bitshift
@@ -26,3 +27,5 @@ char encode_switch(char, char*);
  * Receives an encoded byte and returns the original byte
  */
 char decode_switch(char, char*);
+
+#endif // _SWITCHES_H
