@@ -20,55 +20,55 @@ void help();
  * program after parsing
  */
 int main(int argc, char** argv) {
-	arguments arguments;
-	int cpt;
-	cpt = argc;
-	/*
-	 * Parses the arguments
-	 * Checking if sane arguments were given
-	 * before triggering the program
-	 */
-	arguments.progress       = 0;
-	arguments.thread_num_arg = 1;
-	arguments.operation      = 0;
-	while(--cpt) {
-		if ((arg_is(argv[cpt], "--key", "-k")) && (argc > cpt+1)) {
-			arguments.keyfile     = argv[cpt+1];
-		}
-		if ((arg_is(argv[cpt], "--encode", "-e")) && (argc > cpt+2)) {
-			if (arguments.operation) {
-				printf("Invalid operation. Either 'encode' or 'decode'.\n");
-				return 1;
-			}
-			arguments.operation   = 1;
-			arguments.input_file  = argv[cpt+1];
-			arguments.output_file = argv[cpt+2];
-		}
-		if ((arg_is(argv[cpt], "--decode", "-d")) && (argc > cpt+2)) {
-			if (arguments.operation) {
-				printf("Invalid operation. Either 'encode' or 'decode'.\n");
-				return 1;
-			}
-			arguments.operation   = 2;
-			arguments.input_file  = argv[cpt+1];
-			arguments.output_file = argv[cpt+2];
-		}
-		if (arg_is(argv[cpt], "--help", "-h")) {
-			help();
-			return 0;
-		}
-	}
-	/*
-	 * If sane arguments were given, proceed to the main function
-	 */
-	if (arguments.operation && arguments.input_file && arguments.output_file) {
-		file_opener_and_writer(&arguments);
-	} else {
-		printf("You didn't tell me what to do! Use --help.\n");
-		return 1;
-	}
+    arguments arguments;
+    int cpt;
+    cpt = argc;
+    /*
+     * Parses the arguments
+     * Checking if sane arguments were given
+     * before triggering the program
+     */
+    arguments.progress       = 0;
+    arguments.thread_num_arg = 1;
+    arguments.operation      = 0;
+    while(--cpt) {
+        if ((arg_is(argv[cpt], "--key", "-k")) && (argc > cpt+1)) {
+            arguments.keyfile     = argv[cpt+1];
+        }
+        if ((arg_is(argv[cpt], "--encode", "-e")) && (argc > cpt+2)) {
+            if (arguments.operation) {
+                printf("Invalid operation. Either 'encode' or 'decode'.\n");
+                return 1;
+            }
+            arguments.operation   = 1;
+            arguments.input_file  = argv[cpt+1];
+            arguments.output_file = argv[cpt+2];
+        }
+        if ((arg_is(argv[cpt], "--decode", "-d")) && (argc > cpt+2)) {
+            if (arguments.operation) {
+                printf("Invalid operation. Either 'encode' or 'decode'.\n");
+                return 1;
+            }
+            arguments.operation   = 2;
+            arguments.input_file  = argv[cpt+1];
+            arguments.output_file = argv[cpt+2];
+        }
+        if (arg_is(argv[cpt], "--help", "-h")) {
+            help();
+            return 0;
+        }
+    }
+    /*
+     * If sane arguments were given, proceed to the main function
+     */
+    if (arguments.operation && arguments.input_file && arguments.output_file) {
+        file_opener_and_writer(&arguments);
+    } else {
+        printf("You didn't tell me what to do! Use --help.\n");
+        return 1;
+    }
 
-	return 0;
+    return 0;
 }
 
 
@@ -82,10 +82,13 @@ int main(int argc, char** argv) {
  */
 int arg_is(char* given_arg,char* long_arg, char* short_arg)
 {
-	if ((!strcmp(given_arg, long_arg)) || (!strcmp(given_arg, short_arg))) {
-		return 1;
-	}
-	return 0;
+    if (strcmp(given_arg, long_arg) == 0) {
+        return 1;
+    }
+    if (strcmp(given_arg, short_arg) == 0) {
+        return 1;
+    }
+    return 0;
 }
 
 /**
@@ -93,22 +96,22 @@ int arg_is(char* given_arg,char* long_arg, char* short_arg)
  */
 void help()
 {
-	printf("Usage: codec [--mode inputfile outputfile] [--progress] [--thread 1-4] [--key keyfile] [--help]\n\n"
-			"Encode or decode any file with a G4C key.\n\n"
-			"Options:\n"
-			"    Modes:\n"
-			"      Followed by the input file path and the output file path\n"
-			"        --encode  -e    encoding mode\n"
-			"             or\n"
-			"        --decode  -d    decoding mode\n"
-			"    --key       -k      followed by keyfile\n"
-			"    --help      -h      show this help\n"
-			"Exemples:\n"
-			"    To encode a file:\n"
-			"        codec -e file.jpg file.jpg.c -k key.txt\n\n"
-			"    To decode the resulting file:\n"
-			"        codec -d file.jpg.c file.jpg -k key.txt\n\n"
-			"Made with ♥ by Jacques Rimbault and Neil Amari.\n"
-			"Note: the visible progress increases compute time by *up* to 50%%.\n"
-			);
+    printf("Usage: codec [--mode inputfile outputfile] [--progress] [--thread 1-4] [--key keyfile] [--help]\n\n"
+            "Encode or decode any file with a G4C key.\n\n"
+            "Options:\n"
+            "    Modes:\n"
+            "      Followed by the input file path and the output file path\n"
+            "        --encode  -e    encoding mode\n"
+            "             or\n"
+            "        --decode  -d    decoding mode\n"
+            "    --key       -k      followed by keyfile\n"
+            "    --help      -h      show this help\n"
+            "Exemples:\n"
+            "    To encode a file:\n"
+            "        codec -e file.jpg file.jpg.c -k key.txt\n\n"
+            "    To decode the resulting file:\n"
+            "        codec -d file.jpg.c file.jpg -k key.txt\n\n"
+            "Made with ♥ by Jacques Rimbault and Neil Amari.\n"
+            "Note: the visible progress increases compute time by *up* to 50%%.\n"
+            );
 }

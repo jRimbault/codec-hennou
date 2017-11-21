@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /** I don't want to get a double, so here's my own pow function */
 int pow_int(int n, int p)
@@ -26,32 +27,25 @@ int pow_int(int n, int p)
  */
 char* matrix(char* filename)
 {
-    FILE* keyfile;
-    char* matrix;
-    char  keychar[35];
-    int i, j;
-
-    keyfile = fopen(filename, "r");
+    FILE* keyfile = fopen(filename, "r");
     if (!keyfile) {
         printf("Couldn't access key file. Use --help.\n");
         exit(10);
     }
 
     fseek(keyfile, 5, SEEK_SET);
-    for (i = 0; i < 35; i++) {
-        keychar[i] = getc(keyfile);
-    }
-    matrix = malloc(4 * sizeof(char));
-    for (j = 0; j < 4; j++) {
-        matrix[j] = 0;
-        for (i = 0; i < 8; i++) {
-            // 48 = 0 ascii
-            // 49 = 1 ascii
-            if (keychar[i+(j*9)] == 49) {
-                matrix[j] += pow_int(2, 7-i);
-            }
-        }
-    }
+    char string_matrix[35];
+    fread(string_matrix, 35, 1, keyfile);
     fclose(keyfile);
+
+    int i = 0;
+    char* key_part = strtok(string_matrix, " ");
+    unsigned char* matrix = calloc(4, sizeof(char));
+    while (key_part != NULL && i < 4) {
+        matrix[i] = strtol(key_part, NULL, 2);
+        key_part = strtok(NULL, " ");
+        i += 1;
+    }
+
     return matrix;
 }

@@ -8,22 +8,22 @@
 
 typedef struct thread_args {
     pthread_t g_loops[NUM_THREADS];
-    char*     buffer_input;
-    char*     buffer_output;
-    char*     matrix;
-    long      end;
-    int       operation;
-    int       progress;
-    int       thread_num_arg;
+    char* matrix;
+    char* buffer_input;
+    char* buffer_output;
+    long end;
+    int operation;
+    int progress;
+    int thread_num_arg;
 } thread_args;
 
 typedef struct arguments {
     char* input_file;
     char* output_file;
     char* keyfile;
-    int   operation;
-    int   progress;
-    int   thread_num_arg;
+    int operation;
+    int progress;
+    int thread_num_arg;
 } arguments;
 
 #endif // _STRUCTS_H

@@ -14,9 +14,9 @@
 /** To find the thread index, [0|1|2|3] */
 int get_thread_index(pthread_t* loops)
 {
-    for (int j = 0; j < NUM_THREADS; j++) {
-        if (pthread_equal(pthread_self(), loops[j])) {
-            return j;
+    for (int i = 0; i < NUM_THREADS; i++) {
+        if (pthread_equal(pthread_self(), loops[i])) {
+            return i;
         }
     }
     return -1;
