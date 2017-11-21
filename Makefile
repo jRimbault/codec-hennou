@@ -19,12 +19,13 @@ codec:
 	@$(CC) -O3 -o $(BUILD)/$(FUNCTIONS).o -c $(SRCDIR)/$(FUNCTIONS).c
 	@$(CC) -O3 -o $(BUILD)/$(MAIN).o -c $(SRCDIR)/$(MAIN).c
 
-	@$(CC) $(CFLAGS) -o $@ \
+	@$(CC) -o $@ \
 		$(BUILD)/$(MATRIX).o \
 		$(BUILD)/$(WORKERS).o \
 		$(BUILD)/$(CODEC).o \
 		$(BUILD)/$(FUNCTIONS).o \
-		$(BUILD)/$(MAIN).o
+		$(BUILD)/$(MAIN).o \
+		$(CFLAGS)
 	@echo " › $@ built"
 
 bench: codec

@@ -35,7 +35,7 @@ char* matrix(char* filename)
 
     fseek(keyfile, 5, SEEK_SET);
     char string_matrix[35];
-    fread(string_matrix, 35, 1, keyfile);
+    if(!fread(string_matrix, 35, 1, keyfile)) { exit(11);}
     fclose(keyfile);
 
     int i = 0;
