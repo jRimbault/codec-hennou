@@ -32,12 +32,6 @@ int main(int argc, char** argv) {
 	arguments.thread_num_arg = 1;
 	arguments.operation      = 0;
 	while(--cpt) {
-		if (arg_is(argv[cpt], "--progress", "-p")) {
-			arguments.progress    = 1;
-		}
-		if ((arg_is(argv[cpt], "--thread", "-t")) && (argc > cpt+1)) {
-			arguments.thread_num_arg = atoi(argv[cpt+1]);
-		}
 		if ((arg_is(argv[cpt], "--key", "-k")) && (argc > cpt+1)) {
 			arguments.keyfile     = argv[cpt+1];
 		}
@@ -109,8 +103,6 @@ void help()
 			"        --decode  -d    decoding mode\n"
 			"    --key       -k      followed by keyfile\n"
 			"    --help      -h      show this help\n"
-			"    --progress  -p      progress indicator !caution in multithreaded mode\n"
-			"    --thread    -t      followed by a number 1-4\n\n"
 			"Exemples:\n"
 			"    To encode a file:\n"
 			"        codec -e file.jpg file.jpg.c -k key.txt\n\n"

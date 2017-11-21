@@ -15,9 +15,10 @@
 #/ Usage: bench.sh -f <size in Mo>
 #/
 #/ Options:
-#/   --help, -h displays this help
-#/   --file, -f file size to benchmark
-#/   --sep, -s  prints a line across the screen at the end
+#/   --help, -h         displays this help
+#/   --file, -f         file size to benchmark
+#/   --separator, -s    prints a line across the screen at the end
+#/   --interactive, -i  waiting animation
 usage() {
   grep '^#/' "$0" | cut -c4-
   exit 0
@@ -48,7 +49,7 @@ parse_args() {
       "-f"|"--file")
         size="$2"
         ;;
-      "-s"|"--sep")
+      "-s"|"--separator")
         separator=true
         ;;
       "-i"|"--interactive")
