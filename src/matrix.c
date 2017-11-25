@@ -2,7 +2,7 @@
  * @author: jRimbault
  * @date:   2017-11-21
  * @last modified by:   jRimbault
- * @last modified time: 2017-11-21
+ * @last modified time: 2017-11-25
  */
 
 #include <stdio.h>
@@ -25,7 +25,7 @@ int pow_int(int n, int p)
  *
  * @return          matrix G4C
  */
-char* matrix(char* filename)
+char* get_matrix(char* filename)
 {
     FILE* keyfile = fopen(filename, "r");
     if (!keyfile) {
@@ -48,4 +48,30 @@ char* matrix(char* filename)
     }
 
     return matrix;
+}
+
+/**
+ * Returns directly usable matrix
+ */
+char* matrix(char* filename)
+{
+    unsigned char* matrix = get_matrix(filename);
+    char* m = calloc(16, sizeof(char));
+    m[0]  = 0;
+    m[1]  = matrix[3];
+    m[2]  = matrix[2];
+    m[3]  = matrix[2] ^ matrix[3];
+    m[4]  = matrix[1];
+    m[5]  = matrix[1] ^ matrix[3];
+    m[6]  = matrix[1] ^ matrix[2];
+    m[7]  = matrix[1] ^ matrix[2] ^ matrix[3];
+    m[8]  = matrix[0];
+    m[9]  = matrix[0] ^ matrix[3];
+    m[10] = matrix[0] ^ matrix[2];
+    m[11] = matrix[0] ^ matrix[2] ^ matrix[3];
+    m[12] = matrix[0] ^ matrix[1];
+    m[13] = matrix[0] ^ matrix[1] ^ matrix[3];
+    m[14] = matrix[0] ^ matrix[1] ^ matrix[2];
+    m[15] = matrix[0] ^ matrix[1] ^ matrix[2] ^ matrix[3];
+    return m;
 }

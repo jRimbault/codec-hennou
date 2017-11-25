@@ -2,7 +2,7 @@
  * @author: jRimbault
  * @date:   2017-11-21
  * @last modified by:   jRimbault
- * @last modified time: 2017-11-21
+ * @last modified time: 2017-11-26
  */
 
 #include <stdlib.h>
@@ -38,9 +38,9 @@ void* worker_encoder(void* structure)
     int thread = get_thread_index(args->g_loops);
     if (thread < 0) { exit(30); }
 
-    for (long i = thread; i < args->end; i += NUM_THREADS) {
-        args->buffer_output[i*2]   = encode_switch(quartet_1(args->buffer_input[i]), args->matrix);
-        args->buffer_output[i*2+1] = encode_switch(quartet_2(args->buffer_input[i]), args->matrix);
+    for (unsigned long i = thread; i < args->end; i += NUM_THREADS) {
+        args->buffer_output[i*2]   = args->matrix[quartet_1(args->buffer_input[i])];
+        args->buffer_output[i*2+1] = args->matrix[quartet_2(args->buffer_input[i])];
     }
 
     pthread_exit(NULL);
@@ -52,9 +52,9 @@ void* worker_decoder(void* structure)
     int thread = get_thread_index(args->g_loops);
     if (thread < 0) { exit(30); }
 
-    for (long i = thread; i < args->end; i += NUM_THREADS) {
+    for (unsigned long i = thread; i < args->end; i += NUM_THREADS) {
             args->buffer_output[i]
-                = decode_switch((args->buffer_input[i*2]), args->matrix)
+                = decode_switch(args->buffer_input[i*2], args->matrix)
                 + (decode_switch(args->buffer_input[i*2+1], args->matrix) << 4);
     }
 

@@ -27,50 +27,11 @@ char quartet_2(char c) {
 
 /*
  * Receives a half byte (4bits) and returns the corresponding encoded byte
+ * @param c is half a byte, so always between 0 and 16
  * @Note: ^ is the xor operator
  */
 char encode_switch(char c, char* matrix) {
-	// char matrix[4] = {0b10001111, 0b11000111, 0b10100100, 0b10010010};
-	switch(c) {
-		case 0b0000: /*  0 */
-			return 0;
-		case 0b0001: /*  1 */
-			return matrix[3];
-		case 0b0010: /*  2 */
-			return matrix[2];
-		case 0b0011: /*  3 */
-			return (matrix[2] ^ matrix[3]);
-		case 0b0100: /*  4 */
-			return matrix[1];
-		case 0b0101: /*  5 */
-			return (matrix[1] ^ matrix[3]);
-		case 0b0110: /*  6 */
-			return (matrix[1] ^ matrix[2]);
-		case 0b0111: /*  7 */
-			return (matrix[1] ^ matrix[2] ^ matrix[3]);
-		case 0b1000: /*  8 */
-			return matrix[0];
-		case 0b1001: /*  9 */
-			return (matrix[0] ^ matrix[3]);
-		case 0b1010: /* 10 */
-			return (matrix[0] ^ matrix[2]);
-		case 0b1011: /* 11 */
-			return (matrix[0] ^ matrix[2] ^ matrix[3]);
-		case 0b1100: /* 12 */
-			return (matrix[0] ^ matrix[1]);
-		case 0b1101: /* 13 */
-			return (matrix[0] ^ matrix[1] ^ matrix[3]);
-		case 0b1110: /* 14 */
-			return (matrix[0] ^ matrix[1] ^ matrix[2]);
-		case 0b1111: /* 15 */
-			return (matrix[0] ^ matrix[1] ^ matrix[2] ^ matrix[3]);
-		default:
-			/*
-			 * Shouldn't ever be triggered since all
-			 * possible combinations of 4bits have been made. 0-15
-			 */
-			return 0;
-	}
+	return matrix[c];
 }
 
 /*
@@ -81,46 +42,10 @@ char encode_switch(char c, char* matrix) {
  * @Note: ^ is the xor operator
  */
 char decode_switch(char c, char* matrix) {
-	// char matrix[4] = {0b10001111, 0b11000111, 0b10100100, 0b10010010};
-	if(c == 0) {
-		return 0b0000;
-	} else if (c == matrix[3]) {
-		return 0b0001;
-	} else if (c == matrix[2]) {
-		return 0b0010;
-	} else if (c == (matrix[2] ^ matrix[3])) {
-		return 0b0011;
-	} else if (c == matrix[1]) {
-		return 0b0100;
-	} else if (c == (matrix[1] ^ matrix[3])) {
-		return 0b0101;
-	} else if (c == (matrix[1] ^ matrix[2])) {
-		return 0b0110;
-	} else if (c == (matrix[1] ^ matrix[2] ^ matrix[3])) {
-		return 0b0111;
-	} else if (c == matrix[0]) {
-		return 0b1000;
-	} else if (c == (matrix[0] ^ matrix[3])) {
-		return 0b1001;
-	} else if (c == (matrix[0] ^ matrix[2])) {
-		return 0b1010;
-	} else if (c == (matrix[0] ^ matrix[2] ^ matrix[3])) {
-		return 0b1011;
-	} else if (c == (matrix[0] ^ matrix[1])) {
-		return 0b1100;
-	} else if (c == (matrix[0] ^ matrix[1] ^ matrix[3])) {
-		return 0b1101;
-	} else if (c == (matrix[0] ^ matrix[1] ^ matrix[2])) {
-		return 0b1110;
-	} else if (c == (matrix[0] ^ matrix[1] ^ matrix[2] ^ matrix[3])) {
-		return 0b1111;
-	} else {
-		/*
-		 * Shouldn't ever be triggered since all
-		 * possible combinations of 4bits have been made. 0-15
-		 */
-		return 0;
+	for (int i = 0; i < 16; i += 1) {
+		if (c == matrix[i]) return i;
 	}
+	return 0;
 }
 
 /**
