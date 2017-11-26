@@ -2,7 +2,7 @@
  * @author: jRimbault
  * @date:   2017-11-21
  * @last modified by:   jRimbault
- * @last modified time: 2017-11-25
+ * @last modified time: 2017-11-26
  */
 
 #include <stdio.h>
@@ -57,7 +57,7 @@ char* matrix(char* filename)
 {
     unsigned char* matrix = get_matrix(filename);
     char* m = calloc(16, sizeof(char));
-    m[0]  = 0;
+    m[15]  = 0;
     m[1]  = matrix[3];
     m[2]  = matrix[2];
     m[3]  = matrix[2] ^ matrix[3];
@@ -72,6 +72,6 @@ char* matrix(char* filename)
     m[12] = matrix[0] ^ matrix[1];
     m[13] = matrix[0] ^ matrix[1] ^ matrix[3];
     m[14] = matrix[0] ^ matrix[1] ^ matrix[2];
-    m[15] = matrix[0] ^ matrix[1] ^ matrix[2] ^ matrix[3];
+    m[0] = matrix[0] ^ matrix[1] ^ matrix[2] ^ matrix[3];
     return m;
 }

@@ -5,6 +5,8 @@
  * @Description:
  */
 
+#include <string.h>
+
 /*
  * Right 4bits
  * c is char
@@ -34,6 +36,15 @@ char encode_switch(char c, char* matrix) {
 	return matrix[c];
 }
 
+int strpos(char* string, char c)
+{
+	const char* e = strchr(string, c);
+	if (e) {
+		return (int)(e - string);
+	}
+	return -1;
+}
+
 /*
  * Receives an encoded byte and returns the original byte
  * The only way to speed things up here would be statistical analysis of
@@ -42,10 +53,7 @@ char encode_switch(char c, char* matrix) {
  * @Note: ^ is the xor operator
  */
 char decode_switch(char c, char* matrix) {
-	for (int i = 0; i < 16; i += 1) {
-		if (c == matrix[i]) return i;
-	}
-	return 0;
+	return strpos(matrix, c);
 }
 
 /**
