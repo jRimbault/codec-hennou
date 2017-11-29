@@ -12,6 +12,6 @@
  * Opens the input and output files, creates buffers,
  * triggers the encode and decode loops
  */
-void file_opener_and_writer(void*);
+void orchestrator(void*);
 
 #endif // _FUNCTIONS_H

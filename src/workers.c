@@ -2,7 +2,7 @@
  * @author: jRimbault
  * @date:   2017-11-21
  * @last modified by:   jRimbault
- * @last modified time: 2017-11-26
+ * @last modified time: 2017-11-29
  */
 
 #include <stdlib.h>
@@ -32,9 +32,8 @@ int get_thread_index(pthread_t* loops)
  *   > buffer_output  writing buffer
  *   > matrix         array key matrix
  */
-void* worker_encoder(void* structure)
+void* worker_encoder(thread_args* args)
 {
-    thread_args* args = structure;
     int thread = get_thread_index(args->g_loops);
     if (thread < 0) { exit(30); }
 
@@ -46,9 +45,8 @@ void* worker_encoder(void* structure)
     pthread_exit(NULL);
 }
 
-void* worker_decoder(void* structure)
+void* worker_decoder(thread_args* args)
 {
-    thread_args* args = structure;
     int thread = get_thread_index(args->g_loops);
     if (thread < 0) { exit(30); }
 

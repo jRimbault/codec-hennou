@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
      * If sane arguments were given, proceed to the main function
      */
     if (arguments.operation && arguments.input_file && arguments.output_file) {
-        file_opener_and_writer(&arguments);
+        orchestrator(&arguments);
     } else {
         printf("You didn't tell me what to do! Use --help.\n");
         return 1;

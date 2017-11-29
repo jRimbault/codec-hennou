@@ -52,8 +52,9 @@ int strpos(char* string, char c)
  * major improvement and the distribution would be about even for all cases
  * @Note: ^ is the xor operator
  */
+/** This is becoming too clever for its own good */
 char decode_switch(char c, char* matrix) {
-	return strpos(matrix, c);
+	return (char) (strchr(matrix, c) - matrix);
 }
 
 /**

@@ -18,7 +18,7 @@ char* get_file(char* filename, size_t* filesize)
 {
     FILE* file = fopen(filename, "rb");
     if (!file) {
-        printf("File \"%s\" not readable. Use --help.\n", filename);
+        fprintf(stderr, "File \"%s\" not readable. Use --help.\n", filename);
         exit(25);
     }
 
@@ -44,54 +44,50 @@ char* get_file(char* filename, size_t* filesize)
  *   > progress        display progress indicator or not (1 or 0)
  *   > thread_num_arg  number of threads
  */
-void file_opener_and_writer(arguments* arguments)
+void orchestrator(arguments* arguments)
 {
     thread_args args_t;
-    long filelen;
-    int err, i;
 
-    /*
-     * Parses key file, create matrix
-     */
+    /** Parses key file, create matrix */
     args_t.matrix = matrix(arguments->keyfile);
-    args_t.buffer_input = get_file(arguments->input_file, &filelen);
+    args_t.buffer_input = get_file(arguments->input_file, &args_t.end);
 
     /** ENCODE */
     if (arguments->operation == 1) {
-        args_t.end = filelen;
-        args_t.buffer_output = malloc((filelen * 2) * sizeof(char));
-        for(i = 0; i < NUM_THREADS; i++) {
-            err = pthread_create(&args_t.g_loops[i], NULL, &worker_encoder, &args_t);
+        args_t.buffer_output = malloc((args_t.end * 2) * sizeof(char));
+        for(int i = 0; i < NUM_THREADS; i++) {
+            int err = pthread_create(&args_t.g_loops[i], NULL, &worker_encoder, &args_t);
             if (err != 0) {
-                printf("Can't create thread :[%s]\n", strerror(err));
+                fprintf(stderr, "Can't create thread: [%s]\n", strerror(err));
             }
         }
     }
     /** DECODE */
     if (arguments->operation == 2) {
-        args_t.end = filelen / 2;
-        args_t.buffer_output = malloc((filelen / 2) * sizeof(char));
-        for(i = 0; i < NUM_THREADS; i++) {
-            err = pthread_create(&args_t.g_loops[i], NULL, &worker_decoder, &args_t);
+        args_t.end /= 2;
+        args_t.buffer_output = malloc((args_t.end) * sizeof(char));
+        for(int i = 0; i < NUM_THREADS; i++) {
+            int err = pthread_create(&args_t.g_loops[i], NULL, &worker_decoder, &args_t);
             if (err != 0) {
-                printf("Can't create thread :[%s]\n", strerror(err));
+                fprintf(stderr, "Can't create thread: [%s]\n", strerror(err));
             }
         }
     }
 
-    for(i = 0; i < NUM_THREADS; i++) {
+    for(int i = 0; i < NUM_THREADS; i++) {
         pthread_join(args_t.g_loops[i], NULL);
     }
 
+    /** Dumps output buffer to output file */
     FILE* output = fopen(arguments->output_file, "wb");
     if (!output) {
-        printf("Output file \"%s\" not accessible.\nUse --help.\n", arguments->output_file);
+        fprintf(stderr, "Output file \"%s\" not accessible.\nUse --help.\n", arguments->output_file);
         exit(25);
     }
     fwrite(
         args_t.buffer_output,
         sizeof(char),
-        arguments->operation == 1 ? filelen * 2 : filelen / 2,
+        arguments->operation == 1 ? args_t.end * 2 : args_t.end,
         output
     );
     fclose(output);
