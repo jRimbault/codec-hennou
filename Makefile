@@ -39,4 +39,5 @@ clean:
 	@rm -f build/encoded
 	@rm -f build/decoded
 	@rm -f build/codec
+	@rm -f build/*.o
 	@rm -f codec
