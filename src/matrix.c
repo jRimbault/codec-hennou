@@ -2,7 +2,7 @@
  * @author: jRimbault
  * @date:   2017-11-21
  * @last modified by:   jRimbault
- * @last modified time: 2017-11-26
+ * @last modified time: 2017-12-06
  */
 
 #include <stdio.h>
@@ -55,23 +55,23 @@ char* get_matrix(char* filename)
  */
 char* matrix(char* filename)
 {
-    unsigned char* matrix = get_matrix(filename);
-    char* m = calloc(16, sizeof(char));
-    m[15]  = 0;
-    m[1]  = matrix[3];
-    m[2]  = matrix[2];
-    m[3]  = matrix[2] ^ matrix[3];
-    m[4]  = matrix[1];
-    m[5]  = matrix[1] ^ matrix[3];
-    m[6]  = matrix[1] ^ matrix[2];
-    m[7]  = matrix[1] ^ matrix[2] ^ matrix[3];
-    m[8]  = matrix[0];
-    m[9]  = matrix[0] ^ matrix[3];
-    m[10] = matrix[0] ^ matrix[2];
-    m[11] = matrix[0] ^ matrix[2] ^ matrix[3];
-    m[12] = matrix[0] ^ matrix[1];
-    m[13] = matrix[0] ^ matrix[1] ^ matrix[3];
-    m[14] = matrix[0] ^ matrix[1] ^ matrix[2];
-    m[0] = matrix[0] ^ matrix[1] ^ matrix[2] ^ matrix[3];
-    return m;
+    unsigned char* g4c = get_matrix(filename);
+    char* matrix = calloc(16, sizeof(char));
+    matrix[15] = 0;
+    matrix[1]  = g4c[3];
+    matrix[2]  = g4c[2];
+    matrix[3]  = g4c[2] ^ g4c[3];
+    matrix[4]  = g4c[1];
+    matrix[5]  = g4c[1] ^ g4c[3];
+    matrix[6]  = g4c[1] ^ g4c[2];
+    matrix[7]  = g4c[1] ^ g4c[2] ^ g4c[3];
+    matrix[8]  = g4c[0];
+    matrix[9]  = g4c[0] ^ g4c[3];
+    matrix[10] = g4c[0] ^ g4c[2];
+    matrix[11] = g4c[0] ^ g4c[2] ^ g4c[3];
+    matrix[12] = g4c[0] ^ g4c[1];
+    matrix[13] = g4c[0] ^ g4c[1] ^ g4c[3];
+    matrix[14] = g4c[0] ^ g4c[1] ^ g4c[2];
+    matrix[0]  = g4c[0] ^ g4c[1] ^ g4c[2] ^ g4c[3];
+    return matrix;
 }
