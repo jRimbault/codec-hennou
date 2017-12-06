@@ -2,9 +2,10 @@
  * @author: jRimbault
  * @date:   2017-11-21
  * @last modified by:   jRimbault
- * @last modified time: 2017-11-29
+ * @last modified time: 2017-12-06
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include "structs.h"
@@ -12,32 +13,41 @@
 
 
 /** To find the thread index, [0|1|2|3] */
-int get_thread_index(pthread_t* loops)
+int get_thread_index(thread_args* args)
 {
     for (int i = 0; i < NUM_THREADS; i++) {
-        if (pthread_equal(pthread_self(), loops[i])) {
+        if (pthread_equal(pthread_self(), args->g_loops[i])) {
             return i;
         }
     }
     return -1;
 }
 
+/** Computes the lower and upper bounds for a given thread */
+void get_worker_bounds(thread_args* args, long* start, long* end)
+{
+    int thread = get_thread_index(args);
+    if (thread < 0) { exit(30); }
+
+    long unit = args->end / NUM_THREADS;
+    *start = thread * unit;
+    *end = (*start) + unit;
+    if (NUM_THREADS == thread + 1) {
+        *end = args->end;
+    }
+}
+
 /**
  * Those are the thread worker functions
- * It splits tasks between threads
- * @param structure containing several arguments:
- *   > g_loops        array containing thread's id
- *   > end            end of the input buffer
- *   > buffer_input   reading buffer
- *   > buffer_output  writing buffer
- *   > matrix         array key matrix
+ * Splits tasks between threads
  */
 void* worker_encoder(thread_args* args)
 {
-    int thread = get_thread_index(args->g_loops);
-    if (thread < 0) { exit(30); }
+    long start = 0;
+    long end = 0;
+    get_worker_bounds(args, &start, &end);
 
-    for (unsigned long i = thread; i < args->end; i += NUM_THREADS) {
+    for (long i = start; i < end; i += 1) {
         args->buffer_output[i*2]   = args->matrix[quartet_1(args->buffer_input[i])];
         args->buffer_output[i*2+1] = args->matrix[quartet_2(args->buffer_input[i])];
     }
@@ -47,13 +57,14 @@ void* worker_encoder(thread_args* args)
 
 void* worker_decoder(thread_args* args)
 {
-    int thread = get_thread_index(args->g_loops);
-    if (thread < 0) { exit(30); }
+    long start = 0;
+    long end = 0;
+    get_worker_bounds(args, &start, &end);
 
-    for (unsigned long i = thread; i < args->end; i += NUM_THREADS) {
-            args->buffer_output[i]
-                = decode_switch(args->buffer_input[i*2], args->matrix)
-                + (decode_switch(args->buffer_input[i*2+1], args->matrix) << 4);
+    for (long i = start; i < end; i += 1) {
+        args->buffer_output[i]
+            = decode_switch(args->buffer_input[i*2], args->matrix)
+            + (decode_switch(args->buffer_input[i*2+1], args->matrix) << 4);
     }
 
     pthread_exit(NULL);
