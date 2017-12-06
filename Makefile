@@ -11,6 +11,8 @@ CODEC:=codec
 FUNCTIONS:=functions
 MAIN:=main
 
+ARG_THREAD=4
+
 codec:
 	@echo "Building $@..."
 	@$(CC) -O3 -o $(BUILD)/$(MATRIX).o -c $(SRCDIR)/$(MATRIX).c
@@ -29,9 +31,9 @@ codec:
 	@echo " › $@ built"
 
 bench: codec
-	@./bench.sh -f 64 -s
-	@./bench.sh -f 512 -s
-	@./bench.sh -f 1024
+	@./bench.sh -f 64 -s -t $(ARG_THREAD)
+	@./bench.sh -f 512 -s -t $(ARG_THREAD)
+	@./bench.sh -f 1024 -t $(ARG_THREAD)
 
 # Clean
 clean:

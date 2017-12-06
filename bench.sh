@@ -18,6 +18,7 @@
 #/   --help, -h         displays this help
 #/   --file, -f         file size to benchmark
 #/   --separator, -s    prints a line across the screen at the end
+#/   --thread, -t       thread number
 #/   --interactive, -i  waiting animation
 usage() {
   grep '^#/' "$0" | cut -c4-
@@ -39,6 +40,7 @@ hr() {
   printf '%s%s%s\n' "$start" "${line:0:cols}" "$end"
 }
 
+declare -g thread="4"
 parse_args() {
   size=64
   while [[ $# -gt 0 ]]; do
@@ -54,6 +56,9 @@ parse_args() {
         ;;
       "-i"|"--interactive")
         is=true
+        ;;
+      "-t"|"--thread")
+        thread="${2:-4}"
         ;;
     esac
     shift
@@ -84,7 +89,7 @@ encoding() {
   fi
   {
     time {
-      "$binary" -e "$original" "$encoded" -k "$key" -t 4
+      "$binary" -e "$original" "$encoded" -k "$key" -t "$thread"
     }
   } &> "$tmp" &
   pid=$!
@@ -102,7 +107,7 @@ decoding() {
   fi
   {
     time {
-      "$binary" -d "$encoded" "$decoded" -k "$key" -t 4
+      "$binary" -d "$encoded" "$decoded" -k "$key" -t "$thread"
     }
   } &> "$tmp" &
   pid=$!
