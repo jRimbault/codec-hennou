@@ -1,5 +1,5 @@
 # Compiler
-CC=gcc
+CC=gcc --std=c11
 # Flags
 CFLAGS=-Wall -lpthread -lm -O3
 # OBJECTS
