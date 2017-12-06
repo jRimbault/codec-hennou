@@ -84,7 +84,7 @@ encoding() {
   fi
   {
     time {
-      "$binary" -e "$original" "$encoded" -k "$key"
+      "$binary" -e "$original" "$encoded" -k "$key" -t 4
     }
   } &> "$tmp" &
   pid=$!
@@ -102,7 +102,7 @@ decoding() {
   fi
   {
     time {
-      "$binary" -d "$encoded" "$decoded" -k "$key"
+      "$binary" -d "$encoded" "$decoded" -k "$key" -t 4
     }
   } &> "$tmp" &
   pid=$!

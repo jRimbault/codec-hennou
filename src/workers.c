@@ -5,7 +5,6 @@
  * @last modified time: 2017-12-06
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include "structs.h"
@@ -15,7 +14,7 @@
 /** To find the thread index, [0|1|2|3] */
 int get_thread_index(thread_args* args)
 {
-    for (int i = 0; i < NUM_THREADS; i++) {
+    for (int i = 0; i < args->threads; i++) {
         if (pthread_equal(pthread_self(), args->g_loops[i])) {
             return i;
         }
@@ -29,10 +28,10 @@ void get_worker_bounds(thread_args* args, long* start, long* end)
     int thread = get_thread_index(args);
     if (thread < 0) { exit(30); }
 
-    long unit = args->end / NUM_THREADS;
+    long unit = args->end / args->threads;
     *start = thread * unit;
     *end = (*start) + unit;
-    if (NUM_THREADS == thread + 1) {
+    if (args->threads == thread + 1) {
         *end = args->end;
     }
 }

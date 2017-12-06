@@ -14,7 +14,7 @@ typedef struct thread_args {
     long end;
     int operation;
     int progress;
-    int thread_num_arg;
+    int threads;
 } thread_args;
 
 typedef struct arguments {
@@ -23,7 +23,7 @@ typedef struct arguments {
     char* keyfile;
     int operation;
     int progress;
-    int thread_num_arg;
+    int threads;
 } arguments;
 
 #endif // _STRUCTS_H

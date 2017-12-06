@@ -28,12 +28,21 @@ int main(int argc, char** argv) {
      * Checking if sane arguments were given
      * before triggering the program
      */
-    arguments.progress       = 0;
-    arguments.thread_num_arg = 1;
-    arguments.operation      = 0;
+    arguments.progress = 0;
+    arguments.threads = 4;
+    arguments.operation = 0;
     while(--cpt) {
         if ((arg_is(argv[cpt], "--key", "-k")) && (argc > cpt+1)) {
-            arguments.keyfile     = argv[cpt+1];
+            arguments.keyfile = argv[cpt+1];
+        }
+        if ((arg_is(argv[cpt], "--thread", "-t")) && (argc > cpt+1)) {
+            arguments.threads = atoi(argv[cpt+1]);
+            if (arguments.threads < 1) {
+                arguments.threads = 1;
+            }
+            if (arguments.threads > 4) {
+                arguments.threads = 4;
+            }
         }
         if ((arg_is(argv[cpt], "--encode", "-e")) && (argc > cpt+2)) {
             if (arguments.operation) {
@@ -106,12 +115,12 @@ void help()
             "        --decode  -d    decoding mode\n"
             "    --key       -k      followed by keyfile\n"
             "    --help      -h      show this help\n"
+            "    --thread    -t      number of threads [1-4]\n"
             "Exemples:\n"
             "    To encode a file:\n"
             "        codec -e file.jpg file.jpg.c -k key.txt\n\n"
             "    To decode the resulting file:\n"
             "        codec -d file.jpg.c file.jpg -k key.txt\n\n"
-            "Made with ♥ by Jacques Rimbault and Neil Amari.\n"
-            "Note: the visible progress increases compute time by *up* to 50%%.\n"
+            "Made with ♥ by Jacques Rimbault.\n"
             );
 }
