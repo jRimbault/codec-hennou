@@ -40,6 +40,7 @@ void orchestrator(arguments* arguments)
 {
     thread_args args;
     args.threads = arguments->threads;
+    args.loops = calloc(args.threads, sizeof(pthread_t));
     /** Parses key file, create matrix */
     args.matrix = matrix(arguments->key_file);
     args.buffer_input = get_file(arguments->input_file, &args.size);
@@ -94,5 +95,6 @@ void orchestrator(arguments* arguments)
 
     free(args.buffer_input);
     free(args.buffer_output);
+    free(args.loops);
     free(args.matrix);
 }

@@ -36,9 +36,10 @@ unsigned char* get_matrix(char* filename)
     if (!fread(string_matrix, 35, 1, key_file)) { exit(11); }
     fclose(key_file);
 
-    int i = 0;
-    char* key_part = strtok(string_matrix, " ");
+    char* key_part = calloc(8, sizeof(char));
+    key_part = strtok(string_matrix, " ");
     unsigned char* matrix = calloc(4, sizeof(char));
+    int i = 0;
     while (key_part != NULL && i < 4) {
         matrix[i] = (unsigned char) strtol(key_part, NULL, 2);
         key_part = strtok(NULL, " ");
