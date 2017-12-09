@@ -4,6 +4,9 @@
 
 /*
 
+MAJ: Ci-desous, c'était marrant un temps, maintenant les buffers sont traités
+     séquentiellement.
+
 Le buffer encodé fait deux fois la taille du buffer clair.
 Chaque indice du buffer clair correspond à deux indices du buffer encodé.
 Que ce soit à l'encodage ou au décodage il faut parcourir les buffer
@@ -30,7 +33,10 @@ On peut raisonner de la même façon pour n threads.
 
  */
 
-void* worker_encoder(void* arg);
-void* worker_decoder(void* arg);
+#include "structs.h"
+
+void* worker_encoder(void* args);
+
+void* worker_decoder(void* args);
 
 #endif // _WORKERS_H

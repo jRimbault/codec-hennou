@@ -1,7 +1,6 @@
 /**
- * @Author: jRimbault nAmari
- * @Date:   2017-01-08 21:59:30
- * @Last Modified by:   jRimbault
+ * @Author: jRimbault
+ * @Date:   2017-01-08
  * @Description:
  */
 
@@ -12,6 +11,6 @@
  * Opens the input and output files, creates buffers,
  * triggers the encode and decode loops
  */
-void orchestrator(void*);
+void orchestrator(arguments* arguments);
 
 #endif // _FUNCTIONS_H

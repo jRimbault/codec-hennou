@@ -4,25 +4,22 @@
 
 #include <pthread.h>
 
-#define NUM_THREADS 4
-
-typedef struct thread_args {
-    pthread_t g_loops[NUM_THREADS];
+typedef struct thread_args
+{
+    pthread_t* loops;
     char* matrix;
     char* buffer_input;
     char* buffer_output;
-    long end;
-    int operation;
-    int progress;
+    size_t size;
     int threads;
 } thread_args;
 
-typedef struct arguments {
+typedef struct arguments
+{
     char* input_file;
     char* output_file;
-    char* keyfile;
+    char* key_file;
     int operation;
-    int progress;
     int threads;
 } arguments;
 

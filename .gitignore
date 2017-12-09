@@ -1,13 +1,4 @@
-*.o
-*.exe
 codec
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-*.a
-Makefile
-*Alien*
-*.dat
-original
-encoded
-decoded
+build/
+cmake-build-debug/
+.idea/workspace.xml

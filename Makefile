@@ -37,6 +37,10 @@ bench: codec
 
 # Clean
 clean:
+	@rm -f build/*.o
+	@rm -f codec
+
+extraclean:
 	@rm -f build/original
 	@rm -f build/encoded
 	@rm -f build/decoded

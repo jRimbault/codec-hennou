@@ -1,7 +1,6 @@
 /**
- * @Author: jRimbault nAmari
- * @Date:   2017-01-08 22:00:10
- * @Last Modified by:   jRimbault
+ * @Author: jRimbault
+ * @Date:   2017-01-08
  * @Description:
  */
 
@@ -14,7 +13,7 @@
 #include "workers.h"
 
 /** Shortened version of my file_to_string function */
-char* get_file(char* filename, long* filesize)
+char* get_file(char* filename, size_t* filesize)
 {
     FILE* file = fopen(filename, "rb");
     if (!file) {
@@ -23,12 +22,12 @@ char* get_file(char* filename, long* filesize)
     }
 
     fseek(file, 0, SEEK_END);
-    *filesize = ftell(file);
+    *filesize = (size_t) ftell(file);
     rewind(file);
 
     /** Reads whole file into buffer */
     char* buffer = calloc(*filesize, sizeof(char));
-    if(!fread(buffer, *filesize, 1, file)) { exit(1); }
+    if (!fread(buffer, *filesize, 1, file)) { exit(1); }
     fclose(file);
     return buffer;
 }
@@ -42,14 +41,17 @@ void orchestrator(arguments* arguments)
     thread_args args;
     args.threads = arguments->threads;
     /** Parses key file, create matrix */
-    args.matrix = matrix(arguments->keyfile);
-    args.buffer_input = get_file(arguments->input_file, &args.end);
+    args.matrix = matrix(arguments->key_file);
+    args.buffer_input = get_file(arguments->input_file, &args.size);
 
     /** ENCODE */
     if (arguments->operation == 1) {
-        args.buffer_output = malloc((args.end * 2) * sizeof(char));
-        for(int i = 0; i < arguments->threads; i++) {
-            int err = pthread_create(&args.g_loops[i], NULL, &worker_encoder, &args);
+        args.buffer_output = malloc((args.size * 2) * sizeof(char));
+        for (int i = 0; i < arguments->threads; i++) {
+            int err = pthread_create(
+                    &args.loops[i], NULL, (void*) &worker_encoder,
+                    &args
+            );
             if (err != 0) {
                 fprintf(stderr, "Can't create thread: [%s]\n", strerror(err));
             }
@@ -57,31 +59,36 @@ void orchestrator(arguments* arguments)
     }
     /** DECODE */
     if (arguments->operation == 2) {
-        args.end /= 2;
-        args.buffer_output = malloc((args.end) * sizeof(char));
-        for(int i = 0; i < arguments->threads; i++) {
-            int err = pthread_create(&args.g_loops[i], NULL, &worker_decoder, &args);
+        args.size /= 2;
+        args.buffer_output = malloc((args.size) * sizeof(char));
+        for (int i = 0; i < arguments->threads; i++) {
+            int err = pthread_create(
+                    &args.loops[i], NULL, (void*) &worker_decoder,
+                    &args
+            );
             if (err != 0) {
                 fprintf(stderr, "Can't create thread: [%s]\n", strerror(err));
             }
         }
     }
 
-    for(int i = 0; i < arguments->threads; i++) {
-        pthread_join(args.g_loops[i], NULL);
+    for (int i = 0; i < arguments->threads; i++) {
+        pthread_join(args.loops[i], NULL);
     }
 
     /** Dumps output buffer to output file */
     FILE* output = fopen(arguments->output_file, "wb");
     if (!output) {
-        fprintf(stderr, "Output file \"%s\" not accessible.\nUse --help.\n", arguments->output_file);
+        fprintf(stderr, "Output file \"%s\" not accessible.\nUse --help.\n",
+                arguments->output_file
+        );
         exit(25);
     }
     fwrite(
-        args.buffer_output,
-        sizeof(char),
-        arguments->operation == 1 ? args.end * 2 : args.end,
-        output
+            args.buffer_output,
+            sizeof(char),
+            arguments->operation == 1 ? args.size * 2 : args.size,
+            output
     );
     fclose(output);
 
