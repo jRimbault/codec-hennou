@@ -94,7 +94,7 @@ encoding() {
   } &> "$tmp" &
   pid=$!
   if [[ "$is" = true ]]; then
-    spin $pid "Encoding..."
+    spin "$pid" "Encoding..."
   fi
   wait "$pid"
   echo " › $(grep real "$tmp" | cut -f2)"
@@ -112,7 +112,7 @@ decoding() {
   } &> "$tmp" &
   pid=$!
   if [[ "$is" = true ]]; then
-    spin $pid "Decoding..."
+    spin "$pid" "Decoding..."
   fi
   wait "$pid"
   echo " › $(grep real "$tmp" | cut -f2)"
@@ -132,7 +132,7 @@ main() {
   dd if=/dev/urandom of="$original"  bs=1M  count="$size" > /dev/null 2>&1 &
   pid=$!
   if [[ "$is" = true ]]; then
-    spin $pid "$msg"
+    spin "$pid" "$msg"
   fi
   wait "$pid"
   echo " › Done"
