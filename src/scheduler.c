@@ -32,11 +32,25 @@ char* get_file(char* filename, size_t* filesize)
     return buffer;
 }
 
+void write_file(char* filename, char* buffer, size_t filesize)
+{
+    FILE* output = fopen(filename, "wb");
+    if (!output) {
+        fprintf(stderr,
+                "Output file \"%s\" not accessible.\nUse --help.\n",
+                filename
+        );
+        exit(25);
+    }
+    fwrite(buffer, sizeof(char), filesize, output);
+    fclose(output);
+}
+
 /**
  * Opens the input and output files, creates buffers,
  * triggers the encode and decode loops
  */
-void orchestrator(arguments* arguments)
+void scheduler(arguments* arguments)
 {
     thread_args args;
     args.threads = arguments->threads;
@@ -78,20 +92,10 @@ void orchestrator(arguments* arguments)
     }
 
     /** Dumps output buffer to output file */
-    FILE* output = fopen(arguments->output_file, "wb");
-    if (!output) {
-        fprintf(stderr, "Output file \"%s\" not accessible.\nUse --help.\n",
-                arguments->output_file
-        );
-        exit(25);
-    }
-    fwrite(
-            args.buffer_output,
-            sizeof(char),
-            arguments->operation == 1 ? args.size * 2 : args.size,
-            output
+    write_file(
+            arguments->output_file, args.buffer_output,
+            arguments->operation == 1 ? args.size * 2 : args.size
     );
-    fclose(output);
 
     free(args.buffer_input);
     free(args.buffer_output);

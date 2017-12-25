@@ -32,12 +32,12 @@ unsigned char* get_matrix(char* filename)
     }
 
     fseek(key_file, 5, SEEK_SET);
-    char string_matrix[35];
+    char string_matrix[36];
     if (!fread(string_matrix, 35, 1, key_file)) { exit(11); }
+    string_matrix[35] = 0;
     fclose(key_file);
 
-    char* key_part = calloc(8, sizeof(char));
-    key_part = strtok(string_matrix, " ");
+    char* key_part = strtok(string_matrix, " ");
     unsigned char* matrix = calloc(4, sizeof(char));
     int i = 0;
     while (key_part != NULL && i < 4) {
@@ -45,7 +45,7 @@ unsigned char* get_matrix(char* filename)
         key_part = strtok(NULL, " ");
         i += 1;
     }
-
+    free(key_part);
     return matrix;
 }
 
@@ -72,5 +72,6 @@ char* matrix(char* filename)
     matrix[13] = g4c[0] ^ g4c[1] ^ g4c[3];
     matrix[14] = g4c[0] ^ g4c[1] ^ g4c[2];
     matrix[0] = g4c[0] ^ g4c[1] ^ g4c[2] ^ g4c[3];
+    free(g4c);
     return matrix;
 }

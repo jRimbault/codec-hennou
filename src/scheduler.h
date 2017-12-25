@@ -11,6 +11,6 @@
  * Opens the input and output files, creates buffers,
  * triggers the encode and decode loops
  */
-void orchestrator(arguments* arguments);
+void scheduler(arguments* arguments);
 
 #endif // _FUNCTIONS_H

@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "structs.h"
-#include "functions.h"
+#include "scheduler.h"
 
 int arg_is(char*, char*, char*);
 
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
      * If sane arguments were given, proceed to the main function
      */
     if (arguments.operation && arguments.input_file && arguments.output_file) {
-        orchestrator(&arguments);
+        scheduler(&arguments);
     } else {
         printf("You didn't tell me what to do! Use --help.\n");
         return 1;

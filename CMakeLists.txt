@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 11)
 set(SOURCE_FILES
         src/codec.c
         src/codec.h
-        src/functions.c
-        src/functions.h
+        src/scheduler.c
+        src/scheduler.h
         src/main.c
         src/matrix.c
         src/matrix.h
