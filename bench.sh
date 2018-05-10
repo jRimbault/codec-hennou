@@ -31,7 +31,7 @@ readonly original="$workdir"/build/original
 readonly encoded="$workdir"/build/encoded
 readonly decoded="$workdir"/build/decoded
 readonly binary="$workdir"/codec
-readonly key="$workdir"/build/key.txt
+readonly key="$workdir"/key.txt
 
 hr() {
   local start=$'\e(0' end=$'\e(B' line='qqqqqqqqqqqqqqqq'
