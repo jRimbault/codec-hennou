@@ -27,9 +27,9 @@ usage() {
 
 readonly tmp="/tmp/$(basename "$0").tmp"
 readonly workdir="$(dirname "${BASH_SOURCE[0]}")"
-readonly original="$workdir"/build/original
-readonly encoded="$workdir"/build/encoded
-readonly decoded="$workdir"/build/decoded
+readonly original="$(mktemp)"
+readonly encoded="$(mktemp)"
+readonly decoded="$(mktemp)"
 readonly binary="$workdir"/codec
 readonly key="$workdir"/key.txt
 
@@ -160,3 +160,8 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   parse_args "$@"
   main
 fi
+
+rm "$tmp"
+rm "$original"
+rm "$encoded"
+rm "$decoded"

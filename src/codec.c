@@ -36,7 +36,7 @@ char quartet_2(char c)
  */
 char encode_switch(char c, char* matrix)
 {
-    return matrix[c];
+    return matrix[(int)c];
 }
 
 int strpos(char* string, char c)

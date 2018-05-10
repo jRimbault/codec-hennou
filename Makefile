@@ -15,11 +15,11 @@ ARG_THREAD=4
 
 codec:
 	@echo "Building $@..."
-	@$(CC) -O3 -o $(BUILD)/$(MATRIX).o -c $(SRCDIR)/$(MATRIX).c
-	@$(CC) -O3 -o $(BUILD)/$(WORKERS).o -c $(SRCDIR)/$(WORKERS).c
-	@$(CC) -O3 -o $(BUILD)/$(CODEC).o -c $(SRCDIR)/$(CODEC).c
-	@$(CC) -O3 -o $(BUILD)/$(SCHEDULER).o -c $(SRCDIR)/$(SCHEDULER).c
-	@$(CC) -O3 -o $(BUILD)/$(MAIN).o -c $(SRCDIR)/$(MAIN).c
+	@$(CC) $(CFLAGS) -o $(BUILD)/$(MATRIX).o -c $(SRCDIR)/$(MATRIX).c
+	@$(CC) $(CFLAGS) -o $(BUILD)/$(WORKERS).o -c $(SRCDIR)/$(WORKERS).c
+	@$(CC) $(CFLAGS) -o $(BUILD)/$(CODEC).o -c $(SRCDIR)/$(CODEC).c
+	@$(CC) $(CFLAGS) -o $(BUILD)/$(SCHEDULER).o -c $(SRCDIR)/$(SCHEDULER).c
+	@$(CC) $(CFLAGS) -o $(BUILD)/$(MAIN).o -c $(SRCDIR)/$(MAIN).c
 
 	@$(CC) -o $@ \
 		$(BUILD)/$(MATRIX).o \
@@ -31,6 +31,7 @@ codec:
 	@echo " › $@ built"
 
 bench: codec
+	@strip codec
 	@./bench.sh -f 64 -s -t $(ARG_THREAD)
 	@./bench.sh -f 512 -s -t $(ARG_THREAD)
 	@./bench.sh -f 1024 -t $(ARG_THREAD)

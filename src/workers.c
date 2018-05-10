@@ -48,10 +48,10 @@ void* worker_encoder(void* a)
     get_worker_bounds(args, &start, &end);
 
     for (size_t i = start; i < end; i += 1) {
-        args->buffer_output[i * 2] = args->matrix[quartet_1(
+        args->buffer_output[i * 2] = args->matrix[(int)quartet_1(
                 args->buffer_input[i]
         )];
-        args->buffer_output[i * 2 + 1] = args->matrix[quartet_2(
+        args->buffer_output[i * 2 + 1] = args->matrix[(int)quartet_2(
                 args->buffer_input[i]
         )];
     }
