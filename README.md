@@ -15,4 +15,4 @@ make bench
 
 `make bench` prends un argument optionel `ARG_THREAD=<int>`.
 
-[![asciicast](https://asciinema.org/a/85yFfN4KBtwVc6reBgQU8J2Nn.png)](https://asciinema.org/a/85yFfN4KBtwVc6reBgQU8J2Nn)
+[![asciicast](https://asciinema.org/a/mmmtehNspVw37J2k8pSeAm0yA.png)](https://asciinema.org/a/mmmtehNspVw37J2k8pSeAm0yA)
