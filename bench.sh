@@ -76,10 +76,10 @@ spin() {
   i=0
   while kill -0 "$pid" 2>/dev/null; do
     i=$(( (i+1) %4 ))
-    printf "\r%s [%s]" "$msg" "${spin:$i:1}"
+    printf "\\r%s [%s]" "$msg" "${spin:$i:1}"
     sleep .1
   done
-  printf "\r%s     \n" "$msg"
+  printf "\\r%s     \\n" "$msg"
 }
 
 encoding() {
@@ -122,7 +122,7 @@ main() {
   local pid
   local msg
   if (( size > 1023 )); then
-    msg="Making a $(python -c "print(round($size/1024, 2))") Go file..."
+    msg="Making a $(python3 -c "print(round($size/1024, 2))") Go file..."
   else
     msg="Making a $size Mo file..."
   fi
@@ -137,13 +137,16 @@ main() {
   wait "$pid"
   echo " › Done"
 
+  echo "Checksum original file"
+  md5sum "$original"
   encoding
+  rm "$original"
   decoding
+  echo "Checksum decoded file"
+  md5sum "$decoded"
+  rm "$encoded"
+  rm "$decoded"
 
-  echo "Comparing md5sum signature:"
-  md5sum "$original" "$decoded"
-  echo "Comparing file size:"
-  du -b "$original" "$decoded"
   if [[ "$separator" = true ]]; then
     hr
   fi
@@ -162,6 +165,3 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
 fi
 
 rm "$tmp"
-rm "$original"
-rm "$encoded"
-rm "$decoded"
