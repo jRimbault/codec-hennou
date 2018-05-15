@@ -27,9 +27,9 @@ usage() {
 
 readonly tmp="/tmp/$(basename "$0").tmp"
 readonly workdir="$(dirname "${BASH_SOURCE[0]}")"
-readonly original="$(mktemp)"
-readonly encoded="$(mktemp)"
-readonly decoded="$(mktemp)"
+readonly original="$(mktemp --suffix=.original)"
+readonly encoded="$(mktemp --suffix=.encoded)"
+readonly decoded="$(mktemp --suffix=.decoded)"
 readonly binary="$workdir"/codec
 readonly key="$workdir"/key.txt
 
