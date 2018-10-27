@@ -1,5 +1,6 @@
 # Projet "encodage"
 
+Cette branche correspond au programme au moment du rendu.
 
 Pour tester:
 ```sh
