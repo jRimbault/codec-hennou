@@ -7,11 +7,16 @@ namespace codech
 {
     class Matrix
     {
-        public IList<byte> Value { get; }
+        public IList<byte> Encode { get; }
+        public IList<byte> Decode { get; }
 
-        private Matrix(byte[] key)
+        private Matrix(byte[] matrix)
         {
-            this.Value = key.ToList();
+            this.Encode = matrix;
+            this.Decode = new byte[255];
+            for (byte i = 0; i < matrix.Length; i += 1) {
+                this.Decode[matrix[i]] = i;
+            }
         }
 
         public static Matrix From(string filename)

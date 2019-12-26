@@ -8,6 +8,8 @@ namespace codech
 {
     class Program
     {
+        delegate IEnumerable<byte> CodecWorker(IEnumerable<byte> stream);
+
         static void Main(string[] args)
         {
             var codec = new Codec(Matrix.From(args[0]));
@@ -21,25 +23,34 @@ namespace codech
             }
         }
 
-        private static void Work(Func<IEnumerable<byte>, IEnumerable<byte>> worker, string source, string dest)
+        private static void Work(CodecWorker worker, string source, string dest)
         {
-            var content = File.ReadAllBytes(source);
-            var chunkSize = ChunkSize(content.Length, Environment.ProcessorCount);
-            var result = content.Chunk(chunkSize)
-                // .AsParallel()
-                // .AsOrdered()
-                .SelectMany(worker)
+            var content = File.ReadAllBytes(source).ToList();
+            var result = content.Chunk(ChunkSize(content.Count))
+                .AsParallel()
+                .AsOrdered()
+                .SelectMany(c => worker(c))
                 .ToArray();
             File.WriteAllBytes(dest, result);
         }
 
-        private static int ChunkSize(int len, int max)
+        private static int ChunkSize(int len)
         {
-            if (max <= 0)
+            if (Environment.ProcessorCount <= 0)
             {
                 return len;
             }
-            return (len / max) & 0xfffe;
+            var res = len / Environment.ProcessorCount;
+            if (res % 2 == 1) {
+                return res - 1;
+            }
+            return res;
+        }
+
+        class ChunkWrapper
+        {
+            public int Index { get; set; }
+            public IEnumerable<byte> Chunk { get; set; }
         }
     }
 }

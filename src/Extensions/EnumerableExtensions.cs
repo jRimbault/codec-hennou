@@ -5,36 +5,11 @@ namespace codech.Extensions
 {
     public static class EnumerableExtensions
     {
-        public static IEnumerable<IEnumerable<T>> Chunk<T>(this IEnumerable<T> source, int len)
+        public static IEnumerable<IList<T>> Chunk<T>(this List<T> locations, int nSize=30)
         {
-            if (len == 0)
+            for (int i = 0; i < locations.Count; i += nSize)
             {
-                throw new ArgumentNullException();
-            }
-            var enumerator = source.GetEnumerator();
-            while (enumerator.MoveNext())
-            {
-                yield return Take(enumerator.Current, enumerator, len);
-            }
-        }
-
-        private static IEnumerable<T> Take<T>(T head, IEnumerator<T> tail, int len)
-        {
-            while (true)
-            {
-                yield return head;
-                if (--len == 0)
-                {
-                    break;
-                }
-                if (tail.MoveNext())
-                {
-                    head = tail.Current;
-                }
-                else
-                {
-                    break;
-                }
+                yield return locations.GetRange(i, Math.Min(nSize, locations.Count - i));
             }
         }
     }
