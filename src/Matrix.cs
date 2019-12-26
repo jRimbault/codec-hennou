@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -6,11 +7,11 @@ namespace codech
 {
     class Matrix
     {
-        public readonly byte[] key;
+        public readonly IList<byte> key;
 
         private Matrix(byte[] key)
         {
-            this.key = key;
+            this.key = key.ToList();
         }
 
         public static Matrix From(string filename)

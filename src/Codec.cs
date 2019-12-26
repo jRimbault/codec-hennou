@@ -39,8 +39,8 @@ namespace codech
         {
             return stream.Chunk(2).Select(cc => {
                 byte[] chars = cc.ToArray();
-                var pos1 = (byte) Array.IndexOf(matrix.key, chars[0]);
-                var pos2 = (byte) Array.IndexOf(matrix.key, chars[1]) << 4;
+                var pos1 = (byte) matrix.key.IndexOf(chars[0]);
+                var pos2 = (byte) ((byte) (matrix.key.IndexOf(chars[1])) << 4);
                 return (byte) (pos1 | pos2);
             });
         }
