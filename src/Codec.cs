@@ -1,7 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
-using codech.Extensions;
-using System;
 
 namespace codech
 {
@@ -27,22 +24,27 @@ namespace codech
 
         private static IEnumerable<byte> Encode(Matrix matrix, IEnumerable<byte> stream)
         {
-            return stream.SelectMany(c => new byte[]
-                {
-                    matrix.key[c & MASK],
-                    matrix.key[(c >> 4) & MASK],
-                }
-            );
+            foreach (byte c in stream)
+            {
+                yield return matrix.Value[c & MASK];
+                yield return matrix.Value[(c >> 4) & MASK];
+            }
         }
 
         private static IEnumerable<byte> Decode(Matrix matrix, IEnumerable<byte> stream)
         {
-            return stream.Chunk(2).Select(cc => {
-                byte[] chars = cc.ToArray();
-                var pos1 = (byte) matrix.key.IndexOf(chars[0]);
-                var pos2 = (byte) ((byte) (matrix.key.IndexOf(chars[1])) << 4);
-                return (byte) (pos1 | pos2);
-            });
+            var pair = new List<byte>(2);
+            foreach (var c in stream)
+            {
+                pair.Add(c);
+                if (pair.Count == 2)
+                {
+                    var pos1 = matrix.Value.IndexOf(pair[0]);
+                    var pos2 = matrix.Value.IndexOf(pair[1]) << 4;
+                    pair.Clear();
+                    yield return (byte) (pos1 | pos2);
+                }
+            }
         }
     }
 }
