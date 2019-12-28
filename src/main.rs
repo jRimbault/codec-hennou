@@ -5,7 +5,7 @@ mod matrix;
 
 use args::{parse_args, Argument};
 use codec::{decode, encode};
-use matrix::get_matrix;
+use matrix::{get_matrix, get_reverse_matrix};
 
 use exitcode;
 use rayon::prelude::*;
@@ -28,7 +28,8 @@ fn main() {
     let result = if args.is_present(Argument::Encode) {
         work(|stream| encode(matrix, stream), source)
     } else {
-        work(|stream| decode(matrix, stream), source)
+        let reverse = get_reverse_matrix(matrix);
+        work(|stream| decode(reverse, stream), source)
     };
     if let Err(why) = result {
         println!("{}", why);
@@ -56,11 +57,15 @@ where
     Worker: std::marker::Sync,
     Worker: std::marker::Send,
 {
-    stream
+    let collections = stream
         .par_chunks(chunk_size(stream.len(), num_workers))
         .map(task)
-        .flatten()
-        .collect()
+        .collect::<Vec<Vec<u8>>>();
+    let mut result = Vec::new();
+    for col in collections {
+        result.extend(col);
+    }
+    result
 }
 
 /// chunk size should always be even for the decoding phase
@@ -121,7 +126,8 @@ mod main_tests {
         assert_eq!(original.len(), 59577);
         let encoded = _work(|s| encode(MATRIX, s), original.to_vec(), n);
         assert!(encoded.len() % 2 == 0);
-        let decoded = _work(|s| decode(MATRIX, s), encoded, n);
+        let reverse = get_reverse_matrix(MATRIX);
+        let decoded = _work(|s| decode(reverse, s), encoded, n);
         assert_eq!(original, decoded);
     }
 }

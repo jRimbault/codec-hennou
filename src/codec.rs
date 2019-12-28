@@ -1,41 +1,35 @@
-use crate::matrix::Matrix;
+use crate::matrix::{Matrix, ReverseMatrix};
 
 static MASK: u8 = 0x0f;
 
 pub fn encode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
-    fn split_char_in_two(matrix: Matrix, ch: u8) -> [u8; 2] {
-        [
-            matrix[(ch & MASK) as usize],
-            matrix[(((ch >> 4) & MASK) as usize)],
-        ]
+    let mut encoded_bytes = Vec::new();
+    for ch in stream {
+        encoded_bytes.push(matrix[(ch & MASK) as usize]);
+        encoded_bytes.push(matrix[(((ch >> 4) & MASK) as usize)]);
     }
-    stream
-        .iter()
-        .map(|ch| split_char_in_two(matrix, *ch).to_vec())
-        .flatten()
-        .collect()
+    encoded_bytes
 }
 
-pub fn decode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
-    fn join_encoded_chars(matrix: Matrix, chars: &[u8]) -> u8 {
-        // this safe to do for decoding because the encoding split each
+pub fn decode(matrix: ReverseMatrix, stream: &[u8]) -> Vec<u8> {
+    fn join_encoded_bytes(matrix: ReverseMatrix, chars: &[u8]) -> u8 {
+        // this is safe to do for decoding because the encoding split each
         // byte into two bytes, hence a file encoded with this program
         // will always have an even number of bytes
-        // replacing the matrix with a lookup table would improve the algo
-        // if the matrix were larger
-        let pos1 = matrix.iter().position(|&c| c == chars[0]).unwrap() as u8;
-        let pos2 = (matrix.iter().position(|&c| c == chars[1]).unwrap() << 4) as u8;
+        let pos1 = matrix.get(chars[0] as usize).unwrap();
+        let pos2 = matrix.get(chars[1] as usize).unwrap() << 4;
         pos1 | pos2
     }
     stream
         .chunks(2)
-        .map(|chars| join_encoded_chars(matrix, chars))
+        .map(|chars| join_encoded_bytes(matrix, chars))
         .collect()
 }
 
 #[cfg(test)]
 mod codec_tests {
     use super::*;
+    use crate::matrix::get_reverse_matrix;
     use rstest::rstest_parametrize;
 
     static MATRIX: Matrix = [
@@ -52,7 +46,7 @@ mod codec_tests {
     )]
     fn should_encode_and_decode(original: &str) {
         let clear = original.as_bytes().to_vec();
-        let decoded = decode(MATRIX, &encode(MATRIX, &clear));
+        let decoded = decode(get_reverse_matrix(MATRIX), &encode(MATRIX, &clear));
         assert_eq!(clear, decoded);
     }
 
@@ -73,7 +67,7 @@ mod codec_tests {
     )]
     fn should_encode_decode_random(n: usize) {
         let random_bytes = random(n);
-        let decoded = decode(MATRIX, &encode(MATRIX, &random_bytes));
+        let decoded = decode(get_reverse_matrix(MATRIX), &encode(MATRIX, &random_bytes));
         assert_eq!(random_bytes, decoded);
     }
 }

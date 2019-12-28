@@ -1,8 +1,10 @@
+use arr_macro::arr;
 use std::convert::TryInto;
 use std::fs;
 use std::io;
 
 pub type Matrix = [u8; 16];
+pub type ReverseMatrix = [u8; 255];
 
 pub fn get_matrix(filename: &str) -> io::Result<Matrix> {
     let key = read_key(filename)?;
@@ -11,6 +13,14 @@ pub fn get_matrix(filename: &str) -> io::Result<Matrix> {
     } else {
         Ok(flatten_matrix(key[..4].try_into().expect("")))
     }
+}
+
+pub fn get_reverse_matrix(matrix: Matrix) -> ReverseMatrix {
+    let mut lookup: ReverseMatrix = arr![0; 255];
+    for (i, val) in matrix.iter().enumerate() {
+        lookup[*val as usize] = i as u8;
+    }
+    lookup
 }
 
 fn read_key(filename: &str) -> io::Result<Vec<u8>> {
@@ -45,4 +55,10 @@ fn key(chars: &str) -> Vec<u8> {
         .split_whitespace()
         .map(|num_str| u8::from_str_radix(&num_str, 2).unwrap())
         .collect()
+}
+
+#[test]
+fn should_make_a_reverse_lookup_matrix() {
+    let reverse = get_reverse_matrix(arr![0; 16]);
+    assert_eq!(reverse.len(), std::u8::MAX as usize);
 }
