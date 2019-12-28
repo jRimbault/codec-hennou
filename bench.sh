@@ -115,6 +115,7 @@ main() {
     echo " › $(red "$sum_decoded")"
     exit 1
   fi
+  echo "Speed : $(python3 -c "print(round($size / $seconds, 2))") Mo/s"
 
   if [[ "$separator" = "true" ]]; then
     hr

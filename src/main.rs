@@ -5,7 +5,7 @@ mod matrix;
 
 use args::{parse_args, Argument};
 use codec::{decode, encode};
-use matrix::{get_matrix, get_reverse_matrix};
+use matrix::get_matrix;
 
 use exitcode;
 use rayon::prelude::*;
@@ -23,12 +23,11 @@ fn main() {
         println!("{}", why);
         process::exit(exitcode::NOINPUT);
     }
-    let matrix = matrix.unwrap();
+    let (matrix, reverse) = matrix.unwrap();
     let source = args.value_of(Argument::Source).unwrap();
     let result = if args.is_present(Argument::Encode) {
         work(|stream| encode(matrix, stream), source)
     } else {
-        let reverse = get_reverse_matrix(matrix);
         work(|stream| decode(reverse, stream), source)
     };
     if let Err(why) = result {
@@ -57,10 +56,15 @@ where
     Worker: std::marker::Sync,
     Worker: std::marker::Send,
 {
-    let collections = stream
-        .par_chunks(chunk_size(stream.len(), num_workers))
-        .map(task)
-        .collect::<Vec<Vec<u8>>>();
+    flatten(
+        stream
+            .par_chunks(chunk_size(stream.len(), num_workers))
+            .map(task)
+            .collect(),
+    )
+}
+
+fn flatten<T>(collections: Vec<Vec<T>>) -> Vec<T> {
     let mut result = Vec::new();
     for col in collections {
         result.extend(col);
@@ -70,8 +74,15 @@ where
 
 /// chunk size should always be even for the decoding phase
 fn chunk_size(stream_len: usize, available_max_workers: usize) -> usize {
+    const MASK: usize = std::usize::MAX - 1;
     match stream_len.checked_div(available_max_workers) {
-        Some(chunk_size) => chunk_size & 0xfffe,
+        Some(chunk_size) => {
+            if chunk_size & MASK == 0 {
+                stream_len
+            } else {
+                chunk_size & MASK
+            }
+        }
         None => stream_len, // only one chunk, always even for encoded files
     }
 }
@@ -83,6 +94,7 @@ fn write(filename: &str, buffer: Vec<u8>) -> io::Result<()> {
 #[cfg(test)]
 mod main_tests {
     use super::*;
+    use matrix::get_reverse_matrix;
     use matrix::Matrix;
     use rstest::rstest_parametrize;
 

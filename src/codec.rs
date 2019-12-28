@@ -3,12 +3,20 @@ use crate::matrix::{Matrix, ReverseMatrix};
 static MASK: u8 = 0x0f;
 
 pub fn encode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
-    let mut encoded_bytes = Vec::new();
-    for ch in stream {
-        encoded_bytes.push(matrix[(ch & MASK) as usize]);
-        encoded_bytes.push(matrix[(((ch >> 4) & MASK) as usize)]);
+    fn split_char_into_bytes(matrix: Matrix, ch: u8) -> (u8, u8) {
+        (
+            matrix[(ch & MASK) as usize],
+            matrix[(((ch >> 4) & MASK) as usize)],
+        )
     }
-    encoded_bytes
+    stream
+        .iter()
+        .map(|ch| split_char_into_bytes(matrix, *ch))
+        .fold(Vec::new(), |mut encoded, (a, b)| {
+            encoded.push(a);
+            encoded.push(b);
+            encoded
+        })
 }
 
 pub fn decode(matrix: ReverseMatrix, stream: &[u8]) -> Vec<u8> {

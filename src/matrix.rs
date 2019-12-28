@@ -6,12 +6,13 @@ use std::io;
 pub type Matrix = [u8; 16];
 pub type ReverseMatrix = [u8; 255];
 
-pub fn get_matrix(filename: &str) -> io::Result<Matrix> {
+pub fn get_matrix(filename: &str) -> io::Result<(Matrix, ReverseMatrix)> {
     let key = read_key(filename)?;
     if key.len() != 4 || key.iter().any(|&c| c == 0) {
         Err(io::Error::new(io::ErrorKind::InvalidData, ""))
     } else {
-        Ok(flatten_matrix(key[..4].try_into().expect("")))
+        let matrix = flatten_matrix(key[..4].try_into().expect(""));
+        Ok((matrix, get_reverse_matrix(matrix)))
     }
 }
 
