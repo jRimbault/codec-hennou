@@ -18,20 +18,21 @@
 #/   --help, -h         displays this help
 #/   --file, -f         file size to benchmark
 #/   --separator, -s    prints a line across the screen at the end
-#/   --thread, -t       thread number
-#/   --interactive, -i  waiting animation
+#/   --no-colors, -nc   disable colors
+#/   --binary, -b       set binary (change the default)
 usage() {
   grep '^#/' "$0" | cut -c4-
   exit 0
 }
 
-readonly tmp="/tmp/$(basename "$0").tmp"
+set -eu
+
 readonly workdir="$(dirname "${BASH_SOURCE[0]}")"
 readonly original="$(mktemp --suffix=.original)"
 readonly encoded="$(mktemp --suffix=.encoded)"
 readonly decoded="$(mktemp --suffix=.decoded)"
-readonly binary="$workdir"/codec
 readonly key="$workdir"/key.txt
+binary="$workdir"/codec
 
 hr() {
   local start=$'\e(0' end=$'\e(B' line='qqqqqqqqqqqqqqqq'
@@ -40,9 +41,21 @@ hr() {
   printf '%s%s%s\n' "$start" "${line:0:cols}" "$end"
 }
 
-declare -g thread="4"
+readonly NOCOL="\\033[0m" # No color
+__colored() {
+  if [[ "$color" = "true" ]]; then
+    echo -e "${1}${2}${NOCOL}"
+  else
+    echo "$2"
+  fi
+}
+green() { __colored "\\033[0;32m" "$*"; }
+red() { __colored "\\033[0;31m" "$*"; }
+
 parse_args() {
   size=64
+  separator=false
+  color=true
   while [[ $# -gt 0 ]]; do
     case "$1" in
       "-h"|"--help")
@@ -54,108 +67,85 @@ parse_args() {
       "-s"|"--separator")
         separator=true
         ;;
-      "-i"|"--interactive")
-        is=true
+      "-nc"|"--no-colors")
+        color=false
         ;;
-      "-t"|"--thread")
-        thread="${2:-4}"
+      "-b"|"--binary")
+        binary="$2"
         ;;
     esac
     shift
   done
 }
 
-readonly spin='-\|/'
-
-spin() {
-  local pid
-  local msg
-  local i
-  pid=$1
-  msg="$2"
-  i=0
-  while kill -0 "$pid" 2>/dev/null; do
-    i=$(( (i+1) %4 ))
-    printf "\\r%s [%s]" "$msg" "${spin:$i:1}"
-    sleep .1
-  done
-  printf "\\r%s     \\n" "$msg"
+timeit() {
+  /usr/bin/time -f "%e" "$@" 2>&1
 }
 
-encoding() {
-  local pid
-  if [[ "$is" != true ]]; then
-    echo "Encoding..."
-  fi
-  {
-    time {
-      "$binary" -e "$original" "$encoded" -k "$key" -t "$thread"
-    }
-  } &> "$tmp" &
-  pid=$!
-  if [[ "$is" = true ]]; then
-    spin "$pid" "Encoding..."
-  fi
-  wait "$pid"
-  echo " › $(grep real "$tmp" | cut -f2)"
+checksum_file() {
+  md5sum "$1" | cut -d' ' -f1
 }
 
-decoding() {
-  local pid
-  if [[ "$is" != true ]]; then
-    echo "Decoding..."
+execute() {
+  local seconds speed
+  echo -en "$1...\r"
+  seconds=$(timeit "$binary" -k "$key" "$2" "$3" "$4")
+  if [[ "$seconds" = "0.00" ]]; then
+    speed="too fast to measure"
+  else
+    speed="$(python3 -c "print(round($size / $seconds, 2))") Mo/s"
   fi
-  {
-    time {
-      "$binary" -d "$encoded" "$decoded" -k "$key" -t "$thread"
-    }
-  } &> "$tmp" &
-  pid=$!
-  if [[ "$is" = true ]]; then
-    spin "$pid" "Decoding..."
-  fi
-  wait "$pid"
-  echo " › $(grep real "$tmp" | cut -f2)"
+  echo -en "\r$1 › $(green "${seconds}s") ($speed)\n"
+  rm "$3"
 }
 
 main() {
-  local pid
-  local msg
+  local sum_original sum_decoded msg speed
   if (( size > 1023 )); then
-    msg="Making a $(python3 -c "print(round($size/1024, 2))") Go file..."
+    msg="Making a $(python3 -c "print(round($size/1024, 2))") Go file"
+    echo -en "$msg...\r"
   else
-    msg="Making a $size Mo file..."
+    msg="Making a $size Mo file"
+    echo -en "$msg...\r"
   fi
-  if [[ "$is" != true ]]; then
-    echo "$msg"
-  fi
-  dd if=/dev/urandom of="$original"  bs=1M  count="$size" > /dev/null 2>&1 &
-  pid=$!
-  if [[ "$is" = true ]]; then
-    spin "$pid" "$msg"
-  fi
-  wait "$pid"
-  echo " › Done"
+  dd if=/dev/urandom of="$original"  bs=1M  count="$size" 2> /dev/null
+  echo -en "\r$msg › $(green Done)\n"
 
-  echo "Checksum original file"
-  md5sum "$original"
-  encoding
-  rm "$original"
-  decoding
-  echo "Checksum decoded file"
-  md5sum "$decoded"
-  rm "$encoded"
+  echo -en "Checksum...\r"
+  sum_original=$(checksum_file "$original")
+  echo -en "\rChecksum › $(green "$sum_original")\n"
+
+  execute Encoding --encode "$original" "$encoded"
+  execute Decoding --decode "$encoded" "$decoded"
+
+  echo -en "Checksum...\r"
+  sum_decoded=$(checksum_file "$decoded")
   rm "$decoded"
+  if [[ "$sum_original" = "$sum_decoded" ]]; then
+    echo -en "\rChecksum › $(green "$sum_decoded")\n"
+  else
+    echo -en "\rChecksum › $(red "$sum_decoded")\n"
+    exit 1
+  fi
 
-  if [[ "$separator" = true ]]; then
+  if [[ "$separator" = "true" ]]; then
     hr
   fi
 }
+
+cleanup() {
+  rm "$original" || true
+  rm "$encoded" || true
+  rm "$decoded" || true
+}
+
+trap cleanup SIGHUP SIGINT SIGTERM
 
 # if binary hasn't been compiled yet
 if [[ ! -f "$binary" ]]; then
   echo "$binary not found"
   echo " › execute \`make\`"
+  cleanup
   exit 1
 fi
 # executes only when executed directly not sourced
@@ -163,5 +153,3 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   parse_args "$@"
   main
 fi
-
-rm "$tmp"
