@@ -17,11 +17,20 @@ use std::io::prelude::*;
 use std::process;
 
 fn main() {
+    process::exit(match run() {
+        None => exitcode::OK,
+        Some(error) => {
+            println!("{}", error);
+            error.raw_os_error().unwrap_or(1)
+        }
+    })
+}
+
+fn run() -> Option<std::io::Error> {
     let args = parse_args(env::args());
     let matrix = get_matrix(args.value_of(Argument::KeyFile).unwrap());
-    if let Err(why) = matrix {
-        println!("{}", why);
-        process::exit(exitcode::NOINPUT);
+    if let Err(error) = matrix {
+        return Some(error);
     }
     let (matrix, reverse) = matrix.unwrap();
     let source = args.value_of(Argument::Source).unwrap();
@@ -30,15 +39,14 @@ fn main() {
     } else {
         work(|stream| decode(reverse, stream), source)
     };
-    if let Err(why) = result {
-        println!("{}", why);
-        process::exit(exitcode::DATAERR);
+    if let Err(error) = result {
+        return Some(error);
     }
     let dest = args.value_of(Argument::Dest).unwrap();
-    if let Err(why) = write(dest, result.unwrap()) {
-        println!("{}", why);
-        process::exit(exitcode::CANTCREAT);
+    if let Err(error) = write(dest, result.unwrap()) {
+        return Some(error);
     }
+    None
 }
 
 fn work<Worker>(task: Worker, file: &str) -> io::Result<Vec<u8>>

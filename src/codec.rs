@@ -24,8 +24,8 @@ pub fn decode(matrix: ReverseMatrix, stream: &[u8]) -> Vec<u8> {
         // this is safe to do for decoding because the encoding split each
         // byte into two bytes, hence a file encoded with this program
         // will always have an even number of bytes
-        let pos1 = matrix.get(chars[0] as usize).unwrap();
-        let pos2 = matrix.get(chars[1] as usize).unwrap() << 4;
+        let pos1 = matrix[chars[0] as usize];
+        let pos2 = matrix[chars[1] as usize] << 4;
         pos1 | pos2
     }
     stream
