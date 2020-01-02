@@ -24,8 +24,8 @@ func work(task func([]byte) []byte, source string, dest string) {
 		panic(err)
 	}
 	var res []byte = task(content)
-	// parallel split task between chunks
-	// for _, chunk := range split(content, 8) {
+	// ordered parallel foreach, split task between chunks
+	// for _, chunk := range split(content, getChunkSize(len(content))) {
 	// 	res = append(res, task(chunk)...)
 	// }
 	ioutil.WriteFile(dest, res, 0644)
