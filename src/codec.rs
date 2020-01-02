@@ -3,35 +3,25 @@ use crate::matrix::{Matrix, ReverseMatrix};
 static MASK: u8 = 0x0f;
 
 pub fn encode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
-    fn split_char_into_bytes(matrix: Matrix, ch: u8) -> (u8, u8) {
-        (
-            matrix[(ch & MASK) as usize],
-            matrix[(((ch >> 4) & MASK) as usize)],
-        )
+    let mut res: Vec<u8> = Vec::new();
+    for b in stream {
+        res.push(matrix[(b & MASK) as usize]);
+        res.push(matrix[((b >> 4) & MASK) as usize]);
     }
-    stream
-        .iter()
-        .map(|ch| split_char_into_bytes(matrix, *ch))
-        .fold(Vec::new(), |mut encoded, (a, b)| {
-            encoded.push(a);
-            encoded.push(b);
-            encoded
-        })
+    res
 }
 
 pub fn decode(matrix: ReverseMatrix, stream: &[u8]) -> Vec<u8> {
-    fn join_encoded_bytes(matrix: ReverseMatrix, chars: &[u8]) -> u8 {
-        // this is safe to do for decoding because the encoding split each
-        // byte into two bytes, hence a file encoded with this program
-        // will always have an even number of bytes
-        let pos1 = matrix[chars[0] as usize];
-        let pos2 = matrix[chars[1] as usize] << 4;
-        pos1 | pos2
+    // this is safe to do for decoding because the encoding split each
+    // byte into two bytes, hence a file encoded with this program
+    // will always have an even number of bytes
+    let mut res: Vec<u8> = Vec::new();
+    for i in (0..stream.len()).step_by(2) {
+        let (a, b) = (stream[i], stream[i + 1]);
+        let (p1, p2) = (matrix[a as usize], matrix[b as usize] << 4);
+        res.push(p1 | p2);
     }
-    stream
-        .chunks(2)
-        .map(|chars| join_encoded_bytes(matrix, chars))
-        .collect()
+    res
 }
 
 #[cfg(test)]
