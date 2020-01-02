@@ -19,6 +19,7 @@
 #/   --file, -f         file size to benchmark
 #/   --separator, -s    prints a line across the screen at the end
 #/   --no-colors, -nc   disable colors
+#/   --binary, -b       set binary (change the default)
 usage() {
   grep '^#/' "$0" | cut -c4-
   exit 0
@@ -30,8 +31,8 @@ readonly workdir="$(dirname "${BASH_SOURCE[0]}")"
 readonly original="$(mktemp --suffix=.original)"
 readonly encoded="$(mktemp --suffix=.encoded)"
 readonly decoded="$(mktemp --suffix=.decoded)"
-readonly binary="$workdir"/codech.py
 readonly key="$workdir"/key.txt
+binary="$workdir"/codech.py
 
 hr() {
   local start=$'\e(0' end=$'\e(B' line='qqqqqqqqqqqqqqqq'
@@ -69,6 +70,9 @@ parse_args() {
       "-nc"|"--no-colors")
         color=false
         ;;
+      "-b"|"--binary")
+        binary="$2"
+        ;;
     esac
     shift
   done
@@ -83,7 +87,7 @@ checksum_file() {
 }
 
 main() {
-  local seconds sum_original sum_decoded
+  local eseconds dseconds sum_original sum_decoded
   if (( size > 1023 )); then
     echo "Making a $(python3 -c "print(round($size/1024, 2))") Go file..."
   else
@@ -97,13 +101,13 @@ main() {
   echo " › $(green "$sum_original")"
 
   echo "Encoding..."
-  seconds=$(timeit python3 "$binary" "$key" --encode "$original" "$encoded")
-  echo " › $(green "${seconds}s")"
+  eseconds=$(timeit python3 "$binary" "$key" --encode "$original" "$encoded")
+  echo " › $(green "${eseconds}s")"
   rm "$original"
 
   echo "Decoding..."
-  seconds=$(timeit python3 "$binary" "$key" --decode "$encoded" "$decoded")
-  echo " › $(green "${seconds}s")"
+  dseconds=$(timeit python3 "$binary" "$key" --decode "$encoded" "$decoded")
+  echo " › $(green "${dseconds}s")"
   rm "$encoded"
 
   echo "Checksum decoded file..."
@@ -115,6 +119,8 @@ main() {
     echo " › $(red "$sum_decoded")"
     exit 1
   fi
+  echo "Encode speed : $(python3 -c "print(round($size / $eseconds, 2))") Mo/s"
+  echo "Decode speed : $(python3 -c "print(round($size / $dseconds, 2))") Mo/s"
 
   if [[ "$separator" = "true" ]]; then
     hr
