@@ -2,6 +2,8 @@ package codech
 
 import (
 	"io/ioutil"
+	"runtime"
+	"sync"
 )
 
 // Run program
@@ -23,11 +25,21 @@ func work(task func([]byte) []byte, source string, dest string) {
 	if err != nil {
 		panic(err)
 	}
-	var res []byte = task(content)
-	// ordered parallel foreach, split task between chunks
-	// for _, chunk := range split(content, getChunkSize(len(content))) {
-	// 	res = append(res, task(chunk)...)
-	// }
+	chunks := split(content, getChunkSize(len(content)))
+	var wg sync.WaitGroup
+	for i, chunk := range chunks {
+		wg.Add(1)
+		go func(i int, chunk []byte) {
+			chunks[i] = task(chunk) // reusing same backing slice of slice
+			wg.Done()
+		}(i, chunk)
+	}
+	wg.Wait()
+
+	var res []byte
+	for _, chunk := range chunks {
+		res = append(res, chunk...)
+	}
 	ioutil.WriteFile(dest, res, 0644)
 }
 
@@ -35,8 +47,7 @@ func encode(matrix Matrix, stream []byte) []byte {
 	const MASK = uint8(0x0F)
 	var res []byte
 	for _, b := range stream {
-		res = append(res, matrix[b&MASK])
-		res = append(res, matrix[(b>>4)&MASK])
+		res = append(res, matrix[b&MASK], matrix[(b>>4)&MASK])
 	}
 	return res
 }
@@ -55,8 +66,11 @@ func decode(reverse ReverseMatrix, stream []byte) []byte {
 // allowing the stream to be
 // chunked into n parts where n would be the number of workers
 func getChunkSize(length int) int {
-	// runtime.NumCPU()
-	return 2
+	res := length / runtime.NumCPU()
+	if res%2 == 1 {
+		return res - 1
+	}
+	return res
 }
 
 func split(buf []byte, lim int) [][]byte {
