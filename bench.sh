@@ -87,7 +87,7 @@ checksum_file() {
 }
 
 main() {
-  local seconds sum_original sum_decoded
+  local eseconds dseconds sum_original sum_decoded
   if (( size > 1023 )); then
     echo "Making a $(python3 -c "print(round($size/1024, 2))") Go file..."
   else
@@ -101,13 +101,13 @@ main() {
   echo " › $(green "$sum_original")"
 
   echo "Encoding..."
-  seconds=$(timeit "$binary" "$key" --encode "$original" "$encoded")
-  echo " › $(green "${seconds}s")"
+  eseconds=$(timeit "$binary" "$key" --encode "$original" "$encoded")
+  echo " › $(green "${eseconds}s")"
   rm "$original"
 
   echo "Decoding..."
-  seconds=$(timeit "$binary" "$key" --decode "$encoded" "$decoded")
-  echo " › $(green "${seconds}s")"
+  dseconds=$(timeit "$binary" "$key" --decode "$encoded" "$decoded")
+  echo " › $(green "${dseconds}s")"
   rm "$encoded"
 
   echo "Checksum decoded file..."
@@ -119,7 +119,8 @@ main() {
     echo " › $(red "$sum_decoded")"
     exit 1
   fi
-  echo "Speed : $(python3 -c "print(round($size / $seconds, 2))") Mo/s"
+  echo "Encode speed : $(python3 -c "print(round($size / $eseconds, 2))") Mo/s"
+  echo "Decode speed : $(python3 -c "print(round($size / $dseconds, 2))") Mo/s"
 
   if [[ "$separator" = "true" ]]; then
     hr
