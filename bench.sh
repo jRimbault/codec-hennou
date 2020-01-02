@@ -19,6 +19,7 @@
 #/   --file, -f         file size to benchmark
 #/   --separator, -s    prints a line across the screen at the end
 #/   --no-colors, -nc   disable colors
+#/   --binary, -b       set binary (change the default)
 usage() {
   grep '^#/' "$0" | cut -c4-
   exit 0
@@ -30,8 +31,8 @@ readonly workdir="$(dirname "${BASH_SOURCE[0]}")"
 readonly original="$(mktemp --suffix=.original)"
 readonly encoded="$(mktemp --suffix=.encoded)"
 readonly decoded="$(mktemp --suffix=.decoded)"
-readonly binary="$workdir"/target/release/codech
 readonly key="$workdir"/key.txt
+binary="$workdir"/codech
 
 hr() {
   local start=$'\e(0' end=$'\e(B' line='qqqqqqqqqqqqqqqq'
@@ -68,6 +69,9 @@ parse_args() {
         ;;
       "-nc"|"--no-colors")
         color=false
+        ;;
+      "-b"|"--binary")
+        binary="$2"
         ;;
     esac
     shift

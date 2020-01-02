@@ -1,10 +1,10 @@
-build: target/release/codech
+.PHONY: build
 
-target/release/codech:
-	cargo build --release
-	strip target/release/codech
+build:
+	go build
+	strip codech
 
-bench: target/release/codech
+bench: build
 	@./bench.sh -f 64 -s
 	@./bench.sh -f 512 -s
 	@./bench.sh -f 1024
