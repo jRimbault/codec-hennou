@@ -19,6 +19,7 @@
 #/   --file, -f         file size to benchmark
 #/   --separator, -s    prints a line across the screen at the end
 #/   --no-colors, -nc   disable colors
+#/   --binary, -b       set binary (change the default)
 usage() {
   grep '^#/' "$0" | cut -c4-
   exit 0
@@ -30,8 +31,8 @@ readonly workdir="$(dirname "${BASH_SOURCE[0]}")"
 readonly original="$(mktemp --suffix=.original)"
 readonly encoded="$(mktemp --suffix=.encoded)"
 readonly decoded="$(mktemp --suffix=.decoded)"
-readonly binary="$workdir"/bin/Release/netcoreapp2.2/linux-x64/codech
 readonly key="$workdir"/key.txt
+binary="$workdir"/bin/Release/netcoreapp2.2/linux-x64/publish/codech
 
 hr() {
   local start=$'\e(0' end=$'\e(B' line='qqqqqqqqqqqqqqqq'
@@ -69,6 +70,9 @@ parse_args() {
       "-nc"|"--no-colors")
         color=false
         ;;
+      "-b"|"--binary")
+        binary="$2"
+        ;;
     esac
     shift
   done
@@ -82,37 +86,42 @@ checksum_file() {
   md5sum "$1" | cut -d' ' -f1
 }
 
+execute() {
+  local seconds speed
+  echo -en "$1...\r"
+  seconds=$(timeit "$binary" "$key" "$2" "$3" "$4")
+  speed="$(python3 -c "print(round($size / $seconds, 2))") Mo/s"
+  echo -en "\r$1 › $(green "${seconds}s") ($speed)\n"
+  rm "$3"
+}
+
 main() {
-  local seconds sum_original sum_decoded
+  local sum_original sum_decoded msg speed
   if (( size > 1023 )); then
-    echo "Making a $(python3 -c "print(round($size/1024, 2))") Go file..."
+    msg="Making a $(python3 -c "print(round($size/1024, 2))") Go file"
+    echo -en "$msg...\r"
   else
-    echo "Making a $size Mo file..."
+    msg="Making a $size Mo file"
+    echo -en "$msg...\r"
+    sleep 2
   fi
   dd if=/dev/urandom of="$original"  bs=1M  count="$size" 2> /dev/null
-  echo " › $(green Done)"
+  echo -en "\r$msg › $(green Done)\n"
 
-  echo "Checksum original file..."
+  echo -en "Checksum...\r"
   sum_original=$(checksum_file "$original")
-  echo " › $(green "$sum_original")"
+  echo -en "\rChecksum › $(green "$sum_original")\n"
 
-  echo "Encoding..."
-  seconds=$(timeit "$binary" "$key" --encode "$original" "$encoded")
-  echo " › $(green "${seconds}s")"
-  rm "$original"
+  execute Encoding --encode "$original" "$encoded"
+  execute Decoding --decode "$encoded" "$decoded"
 
-  echo "Decoding..."
-  seconds=$(timeit "$binary" "$key" --decode "$encoded" "$decoded")
-  echo " › $(green "${seconds}s")"
-  rm "$encoded"
-
-  echo "Checksum decoded file..."
+  echo -en "Checksum...\r"
   sum_decoded=$(checksum_file "$decoded")
   rm "$decoded"
   if [[ "$sum_original" = "$sum_decoded" ]]; then
-    echo " › $(green "$sum_decoded")"
+    echo -en "\rChecksum › $(green "$sum_decoded")\n"
   else
-    echo " › $(red "$sum_decoded")"
+    echo -en "\rChecksum › $(red "$sum_decoded")\n"
     exit 1
   fi
 
@@ -121,10 +130,19 @@ main() {
   fi
 }
 
+cleanup() {
+  rm "$original" || true
+  rm "$encoded" || true
+  rm "$decoded" || true
+}
+
+trap cleanup SIGHUP SIGINT SIGTERM
+
 # if binary hasn't been compiled yet
 if [[ ! -f "$binary" ]]; then
   echo "$binary not found"
   echo " › execute \`make\`"
+  cleanup
   exit 1
 fi
 # executes only when executed directly not sourced

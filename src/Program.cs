@@ -29,7 +29,7 @@ namespace codech
             var result = content.Chunk(ChunkSize(content.Count))
                 .AsParallel()
                 .AsOrdered()
-                .SelectMany(c => worker(c))
+                .SelectMany(c => worker(c).ToArray())
                 .ToArray();
             File.WriteAllBytes(dest, result);
         }
@@ -45,12 +45,6 @@ namespace codech
                 return res - 1;
             }
             return res;
-        }
-
-        class ChunkWrapper
-        {
-            public int Index { get; set; }
-            public IEnumerable<byte> Chunk { get; set; }
         }
     }
 }
