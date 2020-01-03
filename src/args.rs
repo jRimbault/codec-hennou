@@ -19,6 +19,7 @@ where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
 {
+    use Argument::*;
     let long_version = format!(
         "{} {}, {}",
         build_info::PKG_VERSION,
@@ -30,35 +31,35 @@ where
         .long_version(long_version.as_str())
         .author(build_info::PKG_AUTHORS)
         .arg(
-            Arg::with_name(Argument::KeyFile.as_str())
-                .help(Argument::KeyFile.description())
+            Arg::with_name(KeyFile.as_str())
+                .help(KeyFile.description())
                 .required(true),
         )
         .arg(
-            Arg::with_name(Argument::Source.as_str())
-                .help(Argument::Source.description())
+            Arg::with_name(Source.as_str())
+                .help(Source.description())
                 .required(true),
         )
         .arg(
-            Arg::with_name(Argument::Dest.as_str())
-                .help(Argument::Dest.description())
+            Arg::with_name(Dest.as_str())
+                .help(Dest.description())
                 .required(true),
         )
         .arg(
-            Arg::with_name(Argument::Decode.as_str())
-                .help(Argument::Action.description())
-                .short(Argument::Decode.as_str())
-                .long(Argument::Decode.as_str()),
+            Arg::with_name(Decode.as_str())
+                .help(Action.description())
+                .short(Decode.as_str())
+                .long(Decode.as_str()),
         )
         .arg(
-            Arg::with_name(Argument::Encode.as_str())
-                .help(Argument::Action.description())
-                .short(Argument::Encode.as_str())
-                .long(Argument::Encode.as_str()),
+            Arg::with_name(Encode.as_str())
+                .help(Action.description())
+                .short(Encode.as_str())
+                .long(Encode.as_str()),
         )
         .group(
-            ArgGroup::with_name(Argument::Action.as_str())
-                .args(&[Argument::Decode.as_str(), Argument::Encode.as_str()])
+            ArgGroup::with_name(Action.as_str())
+                .args(&[Decode.as_str(), Encode.as_str()])
                 .required(true),
         )
         .get_matches_from(itr)
@@ -66,22 +67,24 @@ where
 
 impl Argument {
     pub fn as_str(&self) -> &'static str {
+        use Argument::*;
         match *self {
-            Argument::Action => "action",
-            Argument::Encode => "encode",
-            Argument::Decode => "decode",
-            Argument::KeyFile => "keyfile",
-            Argument::Source => "source",
-            Argument::Dest => "dest",
+            Action => "action",
+            Encode => "encode",
+            Decode => "decode",
+            KeyFile => "keyfile",
+            Source => "source",
+            Dest => "dest",
         }
     }
 
     pub fn description(&self) -> &'static str {
+        use Argument::*;
         match *self {
-            Argument::Action => "Action to execute on the source file",
-            Argument::KeyFile => "File containing a G4C key",
-            Argument::Source => "File to encode or decoded",
-            Argument::Dest => "Output file",
+            Action => "Action to execute on the source file",
+            KeyFile => "File containing a G4C key",
+            Source => "File to encode or decoded",
+            Dest => "Output file",
             _ => "",
         }
     }

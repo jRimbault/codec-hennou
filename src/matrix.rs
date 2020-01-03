@@ -4,7 +4,7 @@ use std::fs;
 use std::io;
 
 pub type Matrix = [u8; 16];
-pub type ReverseMatrix = [u8; 255];
+pub type ReverseMatrix = [u8; 256];
 
 pub fn get_matrix(filename: &str) -> io::Result<(Matrix, ReverseMatrix)> {
     let key = read_key(filename)?;
@@ -17,7 +17,7 @@ pub fn get_matrix(filename: &str) -> io::Result<(Matrix, ReverseMatrix)> {
 }
 
 pub fn get_reverse_matrix(matrix: Matrix) -> ReverseMatrix {
-    let mut lookup: ReverseMatrix = arr![0; 255];
+    let mut lookup: ReverseMatrix = arr![0; 256];
     for (i, val) in matrix.iter().enumerate() {
         lookup[*val as usize] = i as u8;
     }
@@ -61,5 +61,5 @@ fn key(chars: &str) -> Vec<u8> {
 #[test]
 fn should_make_a_reverse_lookup_matrix() {
     let reverse = get_reverse_matrix(arr![0; 16]);
-    assert_eq!(reverse.len(), std::u8::MAX as usize);
+    assert_eq!(reverse.len(), (std::u8::MAX as usize) + 1);
 }

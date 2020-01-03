@@ -86,51 +86,66 @@ checksum_file() {
   md5sum "$1" | cut -d' ' -f1
 }
 
-main() {
-  local eseconds dseconds sum_original sum_decoded
-  if (( size > 1023 )); then
-    echo "Making a $(python3 -c "print(round($size/1024, 2))") Go file..."
+execute() {
+  local seconds speed
+  echo -en "$1...\r"
+  seconds=$(timeit "$binary" "$key" "$2" "$3" "$4")
+  if [[ "$seconds" = "0.00" ]]; then
+    speed="too fast to measure"
   else
-    echo "Making a $size Mo file..."
+    speed="$(python3 -c "print(round($size / $seconds, 2))") Mo/s"
+  fi
+  echo -en "\r$1 › $(green "${seconds}s") ($speed)\n"
+  rm "$3"
+}
+
+main() {
+  local sum_original sum_decoded msg speed
+  if (( size > 1023 )); then
+    msg="Making a $(python3 -c "print(round($size/1024, 2))") Go file"
+    echo -en "$msg...\r"
+  else
+    msg="Making a $size Mo file"
+    echo -en "$msg...\r"
   fi
   dd if=/dev/urandom of="$original"  bs=1M  count="$size" 2> /dev/null
-  echo " › $(green Done)"
+  echo -en "\r$msg › $(green Done)\n"
 
-  echo "Checksum original file..."
+  echo -en "Checksum...\r"
   sum_original=$(checksum_file "$original")
-  echo " › $(green "$sum_original")"
+  echo -en "\rChecksum › $(green "$sum_original")\n"
 
-  echo "Encoding..."
-  eseconds=$(timeit "$binary" "$key" --encode "$original" "$encoded")
-  echo " › $(green "${eseconds}s")"
-  rm "$original"
+  execute Encoding --encode "$original" "$encoded"
+  execute Decoding --decode "$encoded" "$decoded"
 
-  echo "Decoding..."
-  dseconds=$(timeit "$binary" "$key" --decode "$encoded" "$decoded")
-  echo " › $(green "${dseconds}s")"
-  rm "$encoded"
-
-  echo "Checksum decoded file..."
+  echo -en "Checksum...\r"
   sum_decoded=$(checksum_file "$decoded")
   rm "$decoded"
   if [[ "$sum_original" = "$sum_decoded" ]]; then
-    echo " › $(green "$sum_decoded")"
+    echo -en "\rChecksum › $(green "$sum_decoded")\n"
   else
-    echo " › $(red "$sum_decoded")"
+    echo -en "\rChecksum › $(red "$sum_decoded")\n"
     exit 1
   fi
-  echo "Encode speed : $(python3 -c "print(round($size / $eseconds, 2))") Mo/s"
-  echo "Decode speed : $(python3 -c "print(round($size / $dseconds, 2))") Mo/s"
 
   if [[ "$separator" = "true" ]]; then
     hr
   fi
 }
 
+cleanup() {
+  rm "$original" || true
+  rm "$encoded" || true
+  rm "$decoded" || true
+}
+
+trap cleanup SIGHUP SIGINT SIGTERM
+
 # if binary hasn't been compiled yet
 if [[ ! -f "$binary" ]]; then
   echo "$binary not found"
   echo " › execute \`make\`"
+  cleanup
   exit 1
 fi
 # executes only when executed directly not sourced

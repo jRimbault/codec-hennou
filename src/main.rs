@@ -7,6 +7,7 @@ use args::{parse_args, Argument};
 use codec::{decode, encode};
 use matrix::get_matrix;
 
+use clap::ArgMatches;
 use exitcode;
 use rayon::prelude::*;
 use std::env;
@@ -17,7 +18,7 @@ use std::io::prelude::*;
 use std::process;
 
 fn main() {
-    process::exit(match run() {
+    process::exit(match run(parse_args(env::args())) {
         None => exitcode::OK,
         Some(error) => {
             println!("{}", error);
@@ -26,58 +27,57 @@ fn main() {
     })
 }
 
-fn run() -> Option<std::io::Error> {
-    let args = parse_args(env::args());
-    let matrix = get_matrix(args.value_of(Argument::KeyFile).unwrap());
-    if let Err(error) = matrix {
-        return Some(error);
+fn run(args: ArgMatches<'static>) -> Option<io::Error> {
+    use Argument::*;
+    let matrix = get_matrix(args.value_of(KeyFile).unwrap());
+    if matrix.is_err() {
+        return matrix.err();
     }
-    let (matrix, reverse) = matrix.unwrap();
-    let source = args.value_of(Argument::Source).unwrap();
-    let result = if args.is_present(Argument::Encode) {
-        work(|stream| encode(matrix, stream), source)
+    let (encode_m, decode_m) = matrix.unwrap();
+    let source = args.value_of(Source).unwrap();
+    let dest = args.value_of(Dest).unwrap();
+    if args.is_present(Encode) {
+        io_codec(|stream| encode(encode_m, stream), source, dest).err()
     } else {
-        work(|stream| decode(reverse, stream), source)
-    };
-    if let Err(error) = result {
-        return Some(error);
+        io_codec(|stream| decode(decode_m, stream), source, dest).err()
     }
-    let dest = args.value_of(Argument::Dest).unwrap();
-    if let Err(error) = write(dest, result.unwrap()) {
-        return Some(error);
-    }
-    None
 }
 
-fn work<Worker>(task: Worker, file: &str) -> io::Result<Vec<u8>>
+fn io_codec<Worker>(task: Worker, source: &str, dest: &str) -> io::Result<()>
 where
     Worker: Fn(&[u8]) -> Vec<u8>,
-    Worker: std::marker::Sync,
-    Worker: std::marker::Send,
+    Worker: Send + Sync,
 {
-    Ok(_work(task, fs::read(file)?, num_cpus::get()))
+    File::create(dest)?.write_all(&codec(task, fs::read(source)?, num_cpus::get()))
 }
 
-fn _work<Worker>(task: Worker, stream: Vec<u8>, num_workers: usize) -> Vec<u8>
+fn codec<Worker>(task: Worker, stream: Vec<u8>, num_workers: usize) -> Vec<u8>
 where
     Worker: Fn(&[u8]) -> Vec<u8>,
-    Worker: std::marker::Sync,
-    Worker: std::marker::Send,
+    Worker: Send + Sync,
 {
-    flatten(
-        stream
-            .par_chunks(chunk_size(stream.len(), num_workers))
-            .map(task)
-            .collect(),
-    )
+    let size = chunk_size(stream.len(), num_workers);
+    chunked_parallel_map(task, stream, size)
 }
 
-fn flatten<T>(collections: Vec<Vec<T>>) -> Vec<T> {
-    let mut result = Vec::new();
-    for col in collections {
-        result.extend(col);
+fn chunked_parallel_map<T, Mapper>(mapper: Mapper, list: Vec<T>, chunk_size: usize) -> Vec<T>
+where
+    T: Send + Sync,
+    Mapper: Fn(&[T]) -> Vec<T>,
+    Mapper: Send + Sync,
+{
+    /// rayon's flattenning methods handles many cases of no interest here,
+    /// this is better for the particular case of a few large collections
+    ///
+    /// `flat_map` and `flatten` are _very_ slow
+    fn flatten<T>(collections: Vec<Vec<T>>) -> Vec<T> {
+        let mut result = Vec::new();
+        for col in collections {
+            result.extend(col);
+        }
+        result
     }
-    result
+    flatten(list.par_chunks(chunk_size).map(mapper).collect())
 }
 
 /// chunk size should always be even for the decoding phase
@@ -93,10 +93,6 @@ fn chunk_size(stream_len: usize, available_max_workers: usize) -> usize {
         }
         None => stream_len, // only one chunk, always even for encoded files
     }
-}
-
-fn write(filename: &str, buffer: Vec<u8>) -> io::Result<()> {
-    File::create(filename)?.write_all(&buffer)
 }
 
 #[cfg(test)]
@@ -144,10 +140,10 @@ mod main_tests {
     fn should_test_parallelization(n: usize) {
         let original = random(59577);
         assert_eq!(original.len(), 59577);
-        let encoded = _work(|s| encode(MATRIX, s), original.to_vec(), n);
+        let encoded = codec(|s| encode(MATRIX, s), original.to_vec(), n);
         assert!(encoded.len() % 2 == 0);
         let reverse = get_reverse_matrix(MATRIX);
-        let decoded = _work(|s| decode(reverse, s), encoded, n);
+        let decoded = codec(|s| decode(reverse, s), encoded, n);
         assert_eq!(original, decoded);
     }
 }
