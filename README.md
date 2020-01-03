@@ -12,4 +12,4 @@ Ou, plus simplement:
 make bench
 ```
 
-[![asciicast](https://asciinema.org/a/rrXQew548AhjfcEbxURJexibW.svg)](https://asciinema.org/a/rrXQew548AhjfcEbxURJexibW)
+[![asciicast](https://asciinema.org/a/qYRlO6gGqgDAborgA5lfLZ3Rv.svg)](https://asciinema.org/a/qYRlO6gGqgDAborgA5lfLZ3Rv)
