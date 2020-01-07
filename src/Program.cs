@@ -25,11 +25,11 @@ namespace codech
 
         private static void Work(CodecWorker worker, string source, string dest)
         {
-            var content = File.ReadAllBytes(source).ToList();
-            var result = content.Chunk(ChunkSize(content.Count))
+            var content = File.ReadAllBytes(source);
+            var result = content.ToList().Chunk(ChunkSize(content.Length))
                 .AsParallel()
                 .AsOrdered()
-                .SelectMany(c => worker(c).ToArray())
+                .SelectMany(c => worker(c))
                 .ToArray();
             File.WriteAllBytes(dest, result);
         }

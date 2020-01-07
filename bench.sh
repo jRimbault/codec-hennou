@@ -32,7 +32,7 @@ readonly original="$(mktemp --suffix=.original)"
 readonly encoded="$(mktemp --suffix=.encoded)"
 readonly decoded="$(mktemp --suffix=.decoded)"
 readonly key="$workdir"/key.txt
-binary="$workdir"/bin/Release/netcoreapp2.2/linux-x64/publish/codech
+binary="$workdir"/bin/Release/netcoreapp3.1/linux-x64/publish/codech
 
 hr() {
   local start=$'\e(0' end=$'\e(B' line='qqqqqqqqqqqqqqqq'
@@ -103,7 +103,6 @@ main() {
   else
     msg="Making a $size Mo file"
     echo -en "$msg...\r"
-    sleep 2
   fi
   dd if=/dev/urandom of="$original"  bs=1M  count="$size" 2> /dev/null
   echo -en "\r$msg › $(green Done)\n"
