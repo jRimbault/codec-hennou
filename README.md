@@ -1,15 +1,14 @@
 # Projet "encodage"
 
 
-Pour tester:
-```sh
-dd if=/dev/urandom of=random.dat  bs=1M  count=1024 # génère fichier aléatoire de 1Go
-make
-./target/release/codech --help
-```
-Ou, plus simplement:
 ```sh
 make bench
 ```
 
-[![asciicast](https://asciinema.org/a/t7hLnIpKPYL4ng4IP8GYSHamQ.svg)](https://asciinema.org/a/t7hLnIpKPYL4ng4IP8GYSHamQ)
+Les arrays simple de java sont limités à 2^31 éléments (soit 2Go).
+Il faudrait utiliser des ArrayList, mais l'interaction entre les box Byte|byte
+array, et List est trop barbante.
+Si java avait des type unsigned normaux, ce serait plus facile bien sur.
+Un débat de presque 30 ans maintenant.
+
+[![asciicast](https://asciinema.org/a/Wyy8mSKOXQqF9qzneSDiuRAhF.svg)](https://asciinema.org/a/Wyy8mSKOXQqF9qzneSDiuRAhF)
