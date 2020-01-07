@@ -32,7 +32,7 @@ readonly original="$(mktemp --suffix=.original)"
 readonly encoded="$(mktemp --suffix=.encoded)"
 readonly decoded="$(mktemp --suffix=.decoded)"
 readonly key="$workdir"/key.txt
-binary="$workdir"/target/release/codech
+binary="$workdir"/out/artifacts/codech_jar/codech.jar
 
 hr() {
   local start=$'\e(0' end=$'\e(B' line='qqqqqqqqqqqqqqqq'
