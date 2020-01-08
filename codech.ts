@@ -3,20 +3,22 @@
 import fs = require('fs')
 import process = require('process')
 
-type Codec = (stream: Buffer) => Uint8Array
+type Args = ReturnType<typeof parseArgs>
+type Codec = (buffer: Buffer) => Buffer
+type Matrix = ReturnType<typeof getMatrix>
 
-async function main(args: ReturnType<typeof parseArgs>): Promise<number> {
+async function main(args: Args): Promise<number> {
   const matrix = getMatrix(args.keyfile)
   if (args.encode) {
     return work(
-      stream => encode(matrix.encode, stream),
+      buffer => encode(matrix.encode, buffer),
       args.source,
       args.dest
     )
   }
   if (args.decode) {
     return work(
-      stream => decode(matrix.decode, stream),
+      buffer => decode(matrix.decode, buffer),
       args.source,
       args.dest
     )
@@ -26,35 +28,37 @@ async function main(args: ReturnType<typeof parseArgs>): Promise<number> {
 
 function work(codec: Codec, source: string, dest: string): Promise<number> {
   return new Promise(resolve => {
-    fs.readFile(source, (_, buffer) => {
+    fs.readFile(source, (err, buffer) => {
+      if (err !== null) {
+        console.error(err)
+        return resolve(err.errno)
+      }
       fs.writeFile(dest, codec(buffer), () => resolve(0))
     })
   })
 }
 
-function encode(matrix: number[], stream: Buffer): Uint8Array {
+function encode(matrix: Matrix['encode'], original: Buffer): Buffer {
   const MASK = 0x0F
-  const array = new Uint8Array(stream.byteLength * 2);
-  for (let i = 0; i < stream.length; i += 1) {
-    const o = stream.readUInt8(i)
-    array.set([
-      matrix[o & MASK],
-      matrix[(o >> 4) & MASK],
-    ], i * 2)
+  const encoded = Buffer.from(new Uint8Array(original.byteLength * 2))
+  for (let i = 0, j = 0; i < original.byteLength; i += 1, j += 2) {
+    const o = original.readUInt8(i)
+    encoded.writeUInt8(matrix[o & MASK], j)
+    encoded.writeUInt8(matrix[(o >> 4) & MASK], j + 1)
   }
-  return array
+  return encoded
 }
 
-function decode(matrix: Record<number, number>, stream: Buffer): Uint8Array {
-  const array = new Uint8Array(stream.byteLength / 2);
-  for (let i = 0; i < stream.length / 2; i += 1) {
-    const a = stream.readUInt8(i * 2)
-    const b = stream.readUInt8(i * 2 + 1)
+function decode(matrix: Matrix['decode'], encoded: Buffer): Buffer {
+  const decoded = Buffer.from(new Uint8Array(encoded.byteLength / 2))
+  for (let i = 0, j = 0; i < encoded.byteLength; i += 2, j += 1) {
+    const a = encoded.readUInt8(i)
+    const b = encoded.readUInt8(i + 1)
     const p1 = matrix[a]
     const p2 = matrix[b] << 4
-    array.set([p1 | p2], i)
+    decoded.writeUInt8(p1 | p2, j)
   }
-  return array
+  return decoded
 }
 
 function getMatrix(filename: string) {
@@ -79,9 +83,15 @@ function getMatrix(filename: string) {
   matrix[12] = key[0] ^ key[1]
   matrix[13] = key[0] ^ key[1] ^ key[3]
   matrix[14] = key[0] ^ key[1] ^ key[2]
+  matrix[15] = 0
+  const reverse: number[] = Array.from({ length: 256 })
+  reverse.fill(0)
+  for (let i = 0; i < matrix.length; i += 1) {
+    reverse[matrix[i]] = i
+  }
   return {
-    encode: matrix,
-    decode: Object.fromEntries((matrix).map((e, i) => [e, i])) as Record<number, number>
+    encode: matrix as readonly number[],
+    decode: reverse as readonly number[],
   } as const
 }
 
