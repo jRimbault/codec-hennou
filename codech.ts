@@ -25,16 +25,22 @@ async function main(args: ReturnType<typeof parseArgs>): Promise<number> {
 }
 
 function work(codec: Codec, source: string, dest: string): Promise<number> {
-  const buffer = codec(Uint8Array.from(fs.readFileSync(source)))
-  return new Promise(resolve => fs.writeFile(dest, buffer, () => resolve(0)))
+  return new Promise(resolve => {
+    fs.readFile(source, (_, buffer) => {
+      fs.writeFile(dest, codec(buffer), () => resolve(0))
+    })
+  })
 }
 
 function encode(matrix: number[], stream: Uint8Array): Uint8Array {
   const MASK = 0x0F
   const array = new Uint8Array(stream.length * 2);
   for (let i = 0; i < stream.length; i += 1) {
-    const split = [matrix[stream[i] & MASK], matrix[(stream[i] >> 4) & MASK]]
-    array.set(split, i * 2)
+    const o = stream[i]
+    array.set([
+      matrix[o & MASK],
+      matrix[(o >> 4) & MASK]
+    ], i * 2)
   }
   return array
 }
@@ -42,8 +48,11 @@ function encode(matrix: number[], stream: Uint8Array): Uint8Array {
 function decode(matrix: Record<number, number>, stream: Uint8Array): Uint8Array {
   const array = new Uint8Array(stream.length / 2);
   for (let i = 0; i < stream.length / 2; i += 1) {
-    const joined = matrix[stream[i * 2]] | (matrix[stream[i * 2 + 1]] << 4)
-    array.set([joined], i)
+    const a = stream[i * 2]
+    const b = stream[i * 2 + 1]
+    const p1 = matrix[a]
+    const p2 = matrix[b] << 4
+    array.set([p1 | p2], i)
   }
   return array
 }
