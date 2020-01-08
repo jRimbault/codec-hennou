@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env node
 
 import fs = require('fs')
 import process = require('process')
@@ -6,16 +6,17 @@ import process = require('process')
 type Codec = (stream: Uint8Array) => Uint8Array
 
 async function main(args: ReturnType<typeof parseArgs>): Promise<number> {
+  const matrix = getMatrix(args.keyfile)
   if (args.encode) {
     return work(
-      stream => encode(getMatrix(args.keyfile)[0], stream),
+      stream => encode(matrix.encode, stream),
       args.source,
       args.dest
     )
   }
   if (args.decode) {
     return work(
-      stream => decode(getMatrix(args.keyfile)[1], stream),
+      stream => decode(matrix.decode, stream),
       args.source,
       args.dest
     )
@@ -29,9 +30,10 @@ function work(codec: Codec, source: string, dest: string): Promise<number> {
 }
 
 function encode(matrix: number[], stream: Uint8Array): Uint8Array {
+  const MASK = 0x0F
   const array = new Uint8Array(stream.length * 2);
   for (let i = 0; i < stream.length; i += 1) {
-    const split = [matrix[stream[i] & 0x0F], matrix[(stream[i] >> 4) & 0x0F]]
+    const split = [matrix[stream[i] & MASK], matrix[(stream[i] >> 4) & MASK]]
     array.set(split, i * 2)
   }
   return array
@@ -46,7 +48,7 @@ function decode(matrix: Record<number, number>, stream: Uint8Array): Uint8Array 
   return array
 }
 
-function getMatrix(filename: string): [number[], Record<number, number>] {
+function getMatrix(filename: string) {
   const key = fs.readFileSync(filename)
     .slice(5, 40)
     .toString()
@@ -68,7 +70,10 @@ function getMatrix(filename: string): [number[], Record<number, number>] {
   matrix[12] = key[0] ^ key[1]
   matrix[13] = key[0] ^ key[1] ^ key[3]
   matrix[14] = key[0] ^ key[1] ^ key[2]
-  return [matrix, Object.fromEntries((matrix).map((e, i) => [e, i]))]
+  return {
+    encode: matrix,
+    decode: Object.fromEntries((matrix).map((e, i) => [e, i])) as Record<number, number>
+  } as const
 }
 
 function parseArgs(argv: typeof process.argv) {

@@ -316,3 +316,5 @@ obj/
 node_modules/
 tsconfig.tsbuildinfo
 *.js
+key.txt.de
+key.txt.en
