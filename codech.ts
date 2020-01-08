@@ -3,7 +3,7 @@
 import fs = require('fs')
 import process = require('process')
 
-type Codec = (stream: Uint8Array) => Uint8Array
+type Codec = (stream: Buffer) => Uint8Array
 
 async function main(args: ReturnType<typeof parseArgs>): Promise<number> {
   const matrix = getMatrix(args.keyfile)
@@ -32,24 +32,24 @@ function work(codec: Codec, source: string, dest: string): Promise<number> {
   })
 }
 
-function encode(matrix: number[], stream: Uint8Array): Uint8Array {
+function encode(matrix: number[], stream: Buffer): Uint8Array {
   const MASK = 0x0F
-  const array = new Uint8Array(stream.length * 2);
+  const array = new Uint8Array(stream.byteLength * 2);
   for (let i = 0; i < stream.length; i += 1) {
-    const o = stream[i]
+    const o = stream.readUInt8(i)
     array.set([
       matrix[o & MASK],
-      matrix[(o >> 4) & MASK]
+      matrix[(o >> 4) & MASK],
     ], i * 2)
   }
   return array
 }
 
-function decode(matrix: Record<number, number>, stream: Uint8Array): Uint8Array {
-  const array = new Uint8Array(stream.length / 2);
+function decode(matrix: Record<number, number>, stream: Buffer): Uint8Array {
+  const array = new Uint8Array(stream.byteLength / 2);
   for (let i = 0; i < stream.length / 2; i += 1) {
-    const a = stream[i * 2]
-    const b = stream[i * 2 + 1]
+    const a = stream.readUInt8(i * 2)
+    const b = stream.readUInt8(i * 2 + 1)
     const p1 = matrix[a]
     const p2 = matrix[b] << 4
     array.set([p1 | p2], i)
