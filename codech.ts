@@ -94,18 +94,41 @@ function getMatrix(filename: string) {
 }
 
 function parseArgs(argv: typeof process.argv) {
-  if (['-h', '--help'].some(flag => argv.includes(flag)) || argv.length < 6) {
+  const flags = booleanFlags({
+    encode: ['-e', '--encode'],
+    decode: ['-d', '--decode'],
+    help: ['-h', '--help'],
+  }, argv)
+  if (flags.help || argv.length < 6) {
     console.log('codech.js keyfile -e|-d source dest')
     process.exit(0)
   }
   return {
     keyfile: argv[2],
     action: argv[3],
-    encode: ['-e', '--encode'].includes(argv[3]),
-    decode: ['-d', '--decode'].includes(argv[3]),
+    ...flags,
     source: argv[4],
     dest: argv[5],
   } as const
+}
+
+function booleanFlags<Flag extends string>(
+  flagsList: Record<Flag, [string, string]>,
+  argv: readonly string[]
+) {
+  const args = new Set(argv)
+  return mapObject(flagsList, flags => flags.some(f => args.has(f)))
+}
+
+function mapObject<K extends string, T, U>(
+  record: Record<K, T>,
+  transform: (value: T) => U,
+) {
+  const result = {} as Record<K, U>
+  for (const key in record) {
+    result[key] = transform(record[key])
+  }
+  return result
 }
 
 main(parseArgs(process.argv)).then(n => process.exit(n))
