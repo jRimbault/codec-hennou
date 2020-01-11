@@ -94,6 +94,10 @@ function getMatrix(filename: string) {
 }
 
 function parseArgs(argv: typeof process.argv) {
+  if (['-h', '--help'].some(flag => argv.includes(flag)) || argv.length < 6) {
+    console.log('codech.js keyfile -e|-d source dest')
+    process.exit(0)
+  }
   return {
     keyfile: argv[2],
     action: argv[3],
