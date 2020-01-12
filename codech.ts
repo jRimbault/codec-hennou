@@ -93,40 +93,39 @@ function getMatrix(filename: string) {
   } as const
 }
 
-function parseArgs(argv: typeof process.argv) {
+function parseArgs(argv: readonly string[]) {
   const flags = booleanFlags({
     encode: ['-e', '--encode'],
     decode: ['-d', '--decode'],
     help: ['-h', '--help'],
-  }, argv)
-  if (flags.help || argv.length < 6) {
+  }, new Set(argv))
+  if (flags.help || argv.length < 6 || (flags.decode && flags.encode)) {
     console.log('codech.js keyfile -e|-d source dest')
     process.exit(0)
   }
+  const positionalArgs = argv.slice(2).filter(a => a[0] !== '-')
   return {
-    keyfile: argv[2],
-    action: argv[3],
     ...flags,
-    source: argv[4],
-    dest: argv[5],
+    keyfile: positionalArgs[0],
+    source: positionalArgs[1],
+    dest: positionalArgs[2],
   } as const
 }
 
 function booleanFlags<Flag extends string>(
   flagsList: Record<Flag, [string, string]>,
-  argv: readonly string[]
+  args: Set<string>
 ) {
-  const args = new Set(argv)
   return mapObject(flagsList, flags => flags.some(f => args.has(f)))
 }
 
 function mapObject<K extends string, T, U>(
   record: Record<K, T>,
-  transform: (value: T) => U,
+  mapper: (value: T) => U,
 ) {
-  const result = {} as Record<K, U>
+  const result = {} as { [k in K]: U }
   for (const key in record) {
-    result[key] = transform(record[key])
+    result[key] = mapper(record[key])
   }
   return result
 }
