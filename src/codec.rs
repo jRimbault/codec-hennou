@@ -1,27 +1,28 @@
 use crate::matrix::{Matrix, ReverseMatrix};
 
-static MASK: u8 = 0x0f;
 
 pub fn encode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
-    let mut res: Vec<u8> = Vec::with_capacity(stream.len() * 2);
+    const MASK: u8 = 0x0f;
+    let mut encoded = Vec::with_capacity(stream.len() * 2);
     for b in stream {
-        res.push(matrix[(b & MASK) as usize]);
-        res.push(matrix[((b >> 4) & MASK) as usize]);
+        encoded.push(matrix[(b & MASK) as usize]);
+        encoded.push(matrix[((b >> 4) & MASK) as usize]);
     }
-    res
+    encoded
 }
 
 pub fn decode(matrix: ReverseMatrix, stream: &[u8]) -> Vec<u8> {
     // this is safe to do for decoding because the encoding split each
     // byte into two bytes, hence a file encoded with this program
     // will always have an even number of bytes
-    let mut res: Vec<u8> = Vec::with_capacity(stream.len() / 2);
-    for i in (0..stream.len()).step_by(2) {
+    let mut decoded = Vec::with_capacity(stream.len() / 2);
+    let len = stream.len();
+    for i in (0..len).step_by(2) {
         let (a, b) = (stream[i], stream[i + 1]);
         let (p1, p2) = (matrix[a as usize], matrix[b as usize] << 4);
-        res.push(p1 | p2);
+        decoded.push(p1 | p2);
     }
-    res
+    decoded
 }
 
 #[cfg(test)]
