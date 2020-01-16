@@ -1,39 +1,84 @@
-use crate::matrix::{Matrix, ReverseMatrix};
+use crate::matrix::Matrix;
+use rayon::prelude::*;
 
+pub struct Codec {
+    matrix: Matrix,
+    max_workers: usize,
+}
 
-pub fn encode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
-    const MASK: u8 = 0x0f;
+impl Codec {
+    pub fn new(matrix: Matrix, max_workers: usize) -> Self {
+        Codec {
+            matrix,
+            max_workers,
+        }
+    }
+
+    pub fn encode(&self, stream: Vec<u8>) -> Vec<Vec<u8>> {
+        let size = chunk_size(stream.len(), self.max_workers);
+        parallel_codec(|s| encode(self.matrix, s), stream, size)
+    }
+
+    pub fn decode(&self, stream: Vec<u8>) -> Vec<Vec<u8>> {
+        let size = chunk_size(stream.len(), self.max_workers);
+        parallel_codec(|s| decode(self.matrix, s), stream, size)
+    }
+}
+
+fn encode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
     let mut encoded = Vec::with_capacity(stream.len() * 2);
-    for b in stream {
-        encoded.push(matrix[(b & MASK) as usize]);
-        encoded.push(matrix[((b >> 4) & MASK) as usize]);
+    for byte in stream {
+        let [byte0, byte1] = matrix.encode(*byte);
+        encoded.push(byte0);
+        encoded.push(byte1);
     }
     encoded
 }
 
-pub fn decode(matrix: ReverseMatrix, stream: &[u8]) -> Vec<u8> {
+fn decode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
     // this is safe to do for decoding because the encoding split each
     // byte into two bytes, hence a file encoded with this program
     // will always have an even number of bytes
     let mut decoded = Vec::with_capacity(stream.len() / 2);
-    let len = stream.len();
-    for i in (0..len).step_by(2) {
-        let (a, b) = (stream[i], stream[i + 1]);
-        let (p1, p2) = (matrix[a as usize], matrix[b as usize] << 4);
-        decoded.push(p1 | p2);
+    for bytes in stream.chunks(2) {
+        decoded.push(matrix.decode(bytes[0], bytes[1]));
     }
     decoded
+}
+
+fn parallel_codec<Worker>(task: Worker, stream: Vec<u8>, chunk_size: usize) -> Vec<Vec<u8>>
+where
+    Worker: Fn(&[u8]) -> Vec<u8>,
+    Worker: Send + Sync,
+{
+    stream.par_chunks(chunk_size).map(task).collect()
+}
+
+/// chunk size should always be even for the decoding phase
+fn chunk_size(stream_len: usize, max_workers: usize) -> usize {
+    const MASK: usize = std::usize::MAX - 1;
+    if max_workers <= 1 {
+        return stream_len;
+    }
+    match stream_len.checked_div(max_workers) {
+        Some(chunk_size) => {
+            if chunk_size & MASK == 0 {
+                stream_len
+            } else {
+                chunk_size & MASK
+            }
+        }
+        None => stream_len, // only one chunk, always even for encoded files
+    }
 }
 
 #[cfg(test)]
 mod codec_tests {
     use super::*;
-    use crate::matrix::get_reverse_matrix;
+    use crate::matrix::Matrix;
     use rstest::rstest_parametrize;
 
-    static MATRIX: Matrix = [
-        126, 146, 164, 54, 199, 85, 99, 241, 143, 29, 43, 185, 72, 218, 236, 0,
-    ];
+    static KEY: &str = "10101111 11111111 10101100 10011010";
 
     #[rstest_parametrize(
         original,
@@ -45,7 +90,8 @@ mod codec_tests {
     )]
     fn should_encode_and_decode(original: &str) {
         let clear = original.as_bytes().to_vec();
-        let decoded = decode(get_reverse_matrix(MATRIX), &encode(MATRIX, &clear));
+        let matrix = Matrix::from_key([12, 16, 254, 24]);
+        let decoded = decode(matrix, &encode(matrix, &clear));
         assert_eq!(clear, decoded);
     }
 
@@ -66,7 +112,8 @@ mod codec_tests {
     )]
     fn should_encode_decode_random(n: usize) {
         let random_bytes = random(n);
-        let decoded = decode(get_reverse_matrix(MATRIX), &encode(MATRIX, &random_bytes));
+        let matrix = Matrix::from_raw(KEY).unwrap();
+        let decoded = decode(matrix, &encode(matrix, &random_bytes));
         assert_eq!(random_bytes, decoded);
     }
 }

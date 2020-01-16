@@ -20,6 +20,7 @@
 #/   --separator, -s    prints a line across the screen at the end
 #/   --no-colors, -nc   disable colors
 #/   --binary, -b       set binary (change the default)
+#/   --no-io            measure without counting I/O interactions
 usage() {
   grep '^#/' "$0" | cut -c4-
   exit 0
@@ -56,6 +57,7 @@ parse_args() {
   size=64
   separator=false
   color=true
+  noio=false
   while [[ $# -gt 0 ]]; do
     case "$1" in
       "-h"|"--help")
@@ -73,6 +75,9 @@ parse_args() {
       "-b"|"--binary")
         binary="$2"
         ;;
+      "--no-io")
+        noio=true
+        ;;
     esac
     shift
   done
@@ -89,11 +94,15 @@ checksum_file() {
 execute() {
   local seconds speed
   echo -en "$1...\r"
-  seconds=$(timeit "$binary" "$key" "$2" "$3" "$4")
+  if [[ "$noio" = "true" ]]; then
+    seconds=$("$binary" -t "$key" "$2" "$3" "$4")
+  else
+    seconds=$(timeit "$binary" "$key" "$2" "$3" "$4")
+  fi
   if [[ "$seconds" = "0.00" ]]; then
     speed="too fast to measure"
   else
-    speed="$(python3 -c "print(round($size / $seconds, 2))") Mo/s"
+    speed="$(python3 -c "print(round($size / $seconds, 2))") MB/s"
   fi
   echo -en "\r$1 › $(green "${seconds}s") ($speed)\n"
   rm "$3"
@@ -102,10 +111,10 @@ execute() {
 main() {
   local sum_original sum_decoded msg speed
   if (( size > 1023 )); then
-    msg="Making a $(python3 -c "print(round($size/1024, 2))") Go file"
+    msg="Making a $(python3 -c "print(round($size/1024, 2))") GB file"
     echo -en "$msg...\r"
   else
-    msg="Making a $size Mo file"
+    msg="Making a $size MB file"
     echo -en "$msg...\r"
   fi
   dd if=/dev/urandom of="$original"  bs=1M  count="$size" 2> /dev/null

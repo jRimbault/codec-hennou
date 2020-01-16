@@ -5,6 +5,6 @@ target/release/codech:
 	strip target/release/codech
 
 bench: target/release/codech
-	@./bench.sh -f 64 -s
-	@./bench.sh -f 512 -s
-	@./bench.sh -f 1024
+	@./bench.sh -f 64 -s "${ARGS}"
+	@./bench.sh -f 512 -s "${ARGS}"
+	@./bench.sh -f 1024 "${ARGS}"

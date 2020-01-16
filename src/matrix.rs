@@ -1,37 +1,78 @@
-use arr_macro::arr;
 use std::convert::TryInto;
-use std::fs;
-use std::io;
+use std::str;
 
-pub type Matrix = [u8; 16];
-pub type ReverseMatrix = [u8; 256];
+type EncodeMatrix = [u8; 16];
+type DecodeMatrix = [u8; 256];
 
-pub fn get_matrix(filename: &str) -> io::Result<(Matrix, ReverseMatrix)> {
-    let key = read_key(filename)?;
-    if key.len() != 4 || key.iter().any(|&c| c == 0) {
-        Err(io::Error::new(io::ErrorKind::InvalidData, ""))
-    } else {
-        let matrix = flatten_matrix(key[..4].try_into().expect(""));
-        Ok((matrix, get_reverse_matrix(matrix)))
+#[derive(Copy, Clone)]
+pub struct Matrix {
+    encode: EncodeMatrix,
+    decode: DecodeMatrix,
+}
+
+impl Matrix {
+    /// Takes a slice of bytes with a similar ASCII representation to :
+    ///
+    /// `b"10101111 11111111 10101100 10011010"`
+    ///
+    /// This slice should be 35 characters long, including whitespace
+    pub fn from_raw<T: Into<Vec<u8>>>(raw: T) -> Option<Self> {
+        str::from_utf8(&raw.into())
+            .ok()
+            .and_then(|keytext| {
+                if keytext.len() == 35 {
+                    Some(keytext)
+                } else {
+                    None
+                }
+            })
+            .map(|keytext| {
+                keytext
+                    .split_whitespace()
+                    .filter_map(|bin| u8::from_str_radix(&bin, 2).ok())
+                    .collect::<Vec<u8>>()
+            })
+            .and_then(|key| if key.len() == 4 { Some(key) } else { None })
+            .map(|key| Matrix::from_key(key[..4].try_into().unwrap()))
+    }
+
+    pub fn from_key(key: [u8; 4]) -> Self {
+        let encode = get_encode_matrix(key);
+        let decode = get_decode_matrix(encode);
+        Matrix { encode, decode }
+    }
+
+    pub fn encode(&self, byte: u8) -> [u8; 2] {
+        const MASK: u8 = 0x0f;
+        const SHIFT: u8 = 4;
+        [
+            self.encode[(byte & MASK) as usize],
+            self.encode[(byte >> SHIFT) as usize],
+        ]
+    }
+
+    pub fn decode(&self, byte0: u8, byte1: u8) -> u8 {
+        const SHIFT: u8 = 4;
+        let (p1, p2) = (
+            self.decode[byte0 as usize],
+            self.decode[byte1 as usize] << SHIFT,
+        );
+        p1 | p2
     }
 }
 
-pub fn get_reverse_matrix(matrix: Matrix) -> ReverseMatrix {
-    let mut lookup: ReverseMatrix = arr![0; 256];
+fn get_decode_matrix(matrix: EncodeMatrix) -> DecodeMatrix {
+    let mut lookup: DecodeMatrix = [0; 256];
     for (i, val) in matrix.iter().enumerate() {
         lookup[*val as usize] = i as u8;
     }
     lookup
 }
 
-fn read_key(filename: &str) -> io::Result<Vec<u8>> {
-    Ok(key(&fs::read_to_string(filename)?[5..40]))
-}
-
-fn flatten_matrix(key: [u8; 4]) -> Matrix {
+fn get_encode_matrix(key: [u8; 4]) -> EncodeMatrix {
     // explicit layout to make direct lookups during
     // the encode phase and facilitate the decode phase
-    let mut matrix: Matrix = [0; 16];
+    let mut matrix: EncodeMatrix = [0; 16];
     matrix[15] = 0;
     matrix[1] = key[3];
     matrix[2] = key[2];
@@ -49,17 +90,4 @@ fn flatten_matrix(key: [u8; 4]) -> Matrix {
     matrix[14] = key[0] ^ key[1] ^ key[2];
     matrix[0] = key[0] ^ key[1] ^ key[2] ^ key[3];
     matrix
-}
-
-fn key(chars: &str) -> Vec<u8> {
-    chars
-        .split_whitespace()
-        .map(|num_str| u8::from_str_radix(&num_str, 2).unwrap())
-        .collect()
-}
-
-#[test]
-fn should_make_a_reverse_lookup_matrix() {
-    let reverse = get_reverse_matrix(arr![0; 16]);
-    assert_eq!(reverse.len(), (std::u8::MAX as usize) + 1);
 }

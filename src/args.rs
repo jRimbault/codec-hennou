@@ -12,6 +12,7 @@ pub enum Argument {
     Dest,
     Decode,
     Encode,
+    Timings,
 }
 
 pub fn parse_args<T, I>(itr: I) -> ArgMatches<'static>
@@ -46,6 +47,12 @@ where
                 .required(true),
         )
         .arg(
+            Arg::with_name(Timings.as_str())
+                .help(Timings.description())
+                .short(Timings.as_str())
+                .long(Timings.as_str()),
+        )
+        .arg(
             Arg::with_name(Decode.as_str())
                 .help(Action.description())
                 .short(Decode.as_str())
@@ -75,6 +82,7 @@ impl Argument {
             KeyFile => "keyfile",
             Source => "source",
             Dest => "dest",
+            Timings => "timings",
         }
     }
 
@@ -85,6 +93,7 @@ impl Argument {
             KeyFile => "File containing a G4C key",
             Source => "File to encode or decoded",
             Dest => "Output file",
+            Timings => "Output codec execution duration (seconds)",
             _ => "",
         }
     }
