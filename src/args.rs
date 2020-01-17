@@ -6,7 +6,6 @@ use std::ffi::OsString;
 use std::fmt;
 
 pub enum Argument {
-    Action,
     KeyFile,
     Source,
     Dest,
@@ -24,8 +23,8 @@ where
     let long_version = format!(
         "{} {}, {}",
         build_info::PKG_VERSION,
-        build_info::GIT_VERSION.expect(""),
-        build_info::RUSTC_VERSION
+        build_info::GIT_VERSION.unwrap_or("dirty"),
+        build_info::RUSTC_VERSION,
     );
     App::new(build_info::PKG_NAME)
         .version(build_info::PKG_VERSION)
@@ -54,18 +53,18 @@ where
         )
         .arg(
             Arg::with_name(Decode.as_str())
-                .help(Action.description())
+                .help(Decode.description())
                 .short(Decode.as_str())
                 .long(Decode.as_str()),
         )
         .arg(
             Arg::with_name(Encode.as_str())
-                .help(Action.description())
+                .help(Encode.description())
                 .short(Encode.as_str())
                 .long(Encode.as_str()),
         )
         .group(
-            ArgGroup::with_name(Action.as_str())
+            ArgGroup::with_name("action")
                 .args(&[Decode.as_str(), Encode.as_str()])
                 .required(true),
         )
@@ -76,7 +75,6 @@ impl Argument {
     pub fn as_str(&self) -> &'static str {
         use Argument::*;
         match *self {
-            Action => "action",
             Encode => "encode",
             Decode => "decode",
             KeyFile => "keyfile",
@@ -89,12 +87,11 @@ impl Argument {
     pub fn description(&self) -> &'static str {
         use Argument::*;
         match *self {
-            Action => "Action to execute on the source file",
+            Encode | Decode => "Action to execute on the source file",
             KeyFile => "File containing a G4C key",
             Source => "File to encode or decoded",
             Dest => "Output file",
             Timings => "Output codec execution duration (seconds)",
-            _ => "",
         }
     }
 }

@@ -19,3 +19,6 @@ rand = "0.7.2"
 
 [build-dependencies]
 built = "0.3"
+
+[profile.release]
+codegen-units = 1

@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 mod args;
 mod build_info;
 mod codec;
@@ -14,6 +16,7 @@ use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 use std::process;
+use std::time::Instant;
 
 fn main() {
     process::exit(match run(parse_args(env::args())) {
@@ -29,7 +32,14 @@ fn run(args: ArgMatches<'static>) -> Option<io::Error> {
     use io::{Error, ErrorKind::InvalidData};
     let keyfile = args.value_of(Argument::KeyFile).unwrap();
     fs::read_to_string(keyfile)
-        .map(|key| key[5..40].to_owned())
+        .map(|key| key.trim().to_owned())
+        .and_then(|key| {
+            if key.len() < 40 {
+                Err(Error::new(InvalidData, "Key too short"))
+            } else {
+                Ok(key[5..40].to_owned())
+            }
+        })
         .and_then(|key| Matrix::from_raw(key).ok_or(Error::new(InvalidData, "Invalid key")))
         .map(|matrix| Codec::new(matrix, num_cpus::get()))
         .map(|codec| execute(args, codec))
@@ -49,15 +59,24 @@ where
     Converter: Fn(Vec<u8>) -> Vec<Vec<u8>>,
 {
     use Argument::*;
+    let read_start = Instant::now();
     let source = fs::read(args.value_of(Source).unwrap())?;
-    let start = std::time::Instant::now();
+    let read_end = read_start.elapsed();
+    let encoding_start = Instant::now();
     let result = codec(source);
-    if args.is_present(Timings) {
-        println!("{}", start.elapsed().as_secs_f32());
-    }
+    let encoding_end = encoding_start.elapsed();
+    let write_start = Instant::now();
     let mut dest = File::create(args.value_of(Dest).unwrap())?;
     for part in result {
         dest.write_all(&part)?;
+    }
+    if args.is_present(Timings) {
+        println!(
+            "{} {} {}",
+            read_end.as_secs_f32(),
+            encoding_end.as_secs_f32(),
+            write_start.elapsed().as_secs_f32()
+        );
     }
     Ok(())
 }
