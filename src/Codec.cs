@@ -1,27 +1,27 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace codech
 {
-    class Codec
+    internal class Codec
     {
-        private static readonly byte MASK = 0x0f;
-        private readonly Matrix matrix;
+        private const byte Mask = 0x0f;
+        private readonly Matrix _matrix;
 
         public Codec(Matrix matrix)
         {
-            this.matrix = matrix;
+            this._matrix = matrix;
         }
 
         public IEnumerable<byte> Encode(IEnumerable<byte> stream)
         {
             var list = new List<byte>();
-            for (var i = 0; i < stream.Count(); i += 1)
+            byte[] bytes = stream as byte[] ?? stream.ToArray();
+            for (var i = 0; i < bytes.Length; i += 1)
             {
-                var e = stream.ElementAt(i);
-                list.Add(this.matrix.Encode[e & MASK]);
-                list.Add(this.matrix.Encode[(e >> 4) & MASK]);
+                byte e = bytes[i];
+                list.Add(this._matrix.Encode[e & Mask]);
+                list.Add(this._matrix.Encode[(e >> 4) & Mask]);
             }
             return list;
         }
@@ -29,11 +29,12 @@ namespace codech
         public IEnumerable<byte> Decode(IEnumerable<byte> stream)
         {
             var list = new List<byte>();
-            for (var i = 0; i < stream.Count(); i += 2) {
-                var a = stream.ElementAt(i);
-                var b = stream.ElementAt(i + 1);
-                var p1 = this.matrix.Decode[a];
-                var p2 = this.matrix.Decode[b] << 4;
+            byte[] bytes = stream as byte[] ?? stream.ToArray();
+            for (var i = 0; i < bytes.Count(); i += 2) {
+                byte a = bytes[i];
+                byte b = bytes[i];
+                byte p1 = this._matrix.Decode[a];
+                var p2 = (byte) (this._matrix.Decode[b] << 4);
                 list.Add((byte) (p1 | p2));
             }
             return list;

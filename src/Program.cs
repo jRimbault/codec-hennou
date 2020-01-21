@@ -6,11 +6,11 @@ using codech.Extensions;
 
 namespace codech
 {
-    class Program
+    internal class Program
     {
-        delegate IEnumerable<byte> CodecWorker(IEnumerable<byte> stream);
+        private delegate IEnumerable<byte> CodecWorker(IEnumerable<byte> stream);
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             var codec = new Codec(Matrix.From(args[0]));
             if (args[1] == "--encode" || args[1] == "-e")
@@ -25,12 +25,12 @@ namespace codech
 
         private static void Work(CodecWorker worker, string source, string dest)
         {
-            var content = File.ReadAllBytes(source);
-            var result = content.ToList().Chunk(ChunkSize(content.Length))
-                .AsParallel()
-                .AsOrdered()
-                .SelectMany(c => worker(c))
-                .ToArray();
+            List<byte> content = File.ReadAllBytes(source).ToList();
+            byte[] result = content.Chunk(ChunkSize(content.Count))
+                                   .AsParallel()
+                                   .AsOrdered()
+                                   .SelectMany(c => worker(c))
+                                   .ToArray();
             File.WriteAllBytes(dest, result);
         }
 
@@ -40,7 +40,7 @@ namespace codech
             {
                 return len;
             }
-            var res = len / Environment.ProcessorCount;
+            int res = len / Environment.ProcessorCount;
             if (res % 2 == 1) {
                 return res - 1;
             }

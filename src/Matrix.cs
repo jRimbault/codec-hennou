@@ -5,16 +5,16 @@ using System.Linq;
 
 namespace codech
 {
-    class Matrix
+    internal class Matrix
     {
         public IList<byte> Encode { get; }
         public IList<byte> Decode { get; }
 
-        private Matrix(byte[] matrix)
+        private Matrix(IList<byte> matrix)
         {
             this.Encode = matrix;
             this.Decode = new byte[255];
-            for (byte i = 0; i < matrix.Length; i += 1) {
+            for (byte i = 0; i < matrix.Count; i += 1) {
                 this.Decode[matrix[i]] = i;
             }
         }
