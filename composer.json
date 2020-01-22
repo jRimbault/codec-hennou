@@ -1,0 +1,11 @@
+{
+    "name": "jrimbault/codech",
+    "type": "project",
+    "authors": [
+        {
+            "name": "jRimbault",
+            "email": "jacques.rimbault@gmail.com"
+        }
+    ],
+    "require": {}
+}
