@@ -1,7 +1,29 @@
+#!/usr/bin/env php
 <?php
 
-function main($args) {
-    echo Matrix::from_file("key.txt") . PHP_EOL;
+function main(array $argv) {
+    $matrix = Matrix::from_file($argv[1]);
+    $content = binRead($argv[3]);
+    if ($argv[2] === "--encode" || $argv[2] === "-e") {
+        $result = encode($matrix, $content);
+    } else {
+        $result = decode($matrix, $content);
+    }
+    binWrite($argv[4], $result);
+}
+
+function binRead(string $filename) {
+    $handle = fopen($filename, "rb");
+    $contents = fread($handle, filesize($filename));
+    fclose($handle);
+    return array_values(unpack("c*", $contents));
+}
+
+function binWrite(string $filename, $contents) {
+    $handle = fopen($filename, "wb");
+    /** pack("c*", $contents) didn't work ?? */
+    fwrite($handle, join('', array_map(fn($c) => chr($c), $contents)));
+    fclose($handle);
 }
 
 /**
@@ -9,8 +31,13 @@ function main($args) {
  * @param int[] $bytes
  * @return int[]
  */
-function encode(Matrix $matrix, array $bytes) {
-    return $bytes;
+function encode(Matrix $matrix, array $bytes): array {
+    $encoded = [];
+    foreach ($bytes as $byte) {
+        $encoded[] = $matrix->encode[$byte & 0x0F];
+        $encoded[] = $matrix->encode[($byte >> 4) & 0x0F];
+    }
+    return $encoded;
 }
 
 /**
@@ -18,8 +45,15 @@ function encode(Matrix $matrix, array $bytes) {
  * @param int[] $bytes
  * @return int[]
  */
-function decode(Matrix $matrix, array $bytes) {
-    return $bytes;
+function decode(Matrix $matrix, array $bytes): array {
+    $decoded = [];
+    for ($i = 0; $i < count($bytes); $i += 2) {
+        [$a, $b] = [$bytes[$i], $bytes[$i + 1]];
+        $p1 = $matrix->decode[abs($a)];
+        $p2 = $matrix->decode[abs($b)] << 4;
+        $decoded[] = $p1 | $p2;
+    }
+    return $decoded;
 }
 
 class Matrix {
@@ -39,7 +73,6 @@ class Matrix {
 
     public static function from_file(string $filename): Matrix {
         $content = explode(' ', substr(file_get_contents($filename), 5, 35));
-
         $nums = [];
         foreach ($content as $num_str) {
             $nums[] = intval($num_str, 2);
@@ -66,20 +99,17 @@ class Matrix {
             $key[0] ^ $key[1],
             $key[0] ^ $key[1] ^ $key[3],
             $key[0] ^ $key[1] ^ $key[2],
+            0,
         ];
     }
 
     private static function reverse(array $matrix): array {
-        $reverse = [];
+        $reverse = array_fill(0, 256, 0);
         for ($i = 0; $i < count($matrix); $i += 1) {
             $reverse[$matrix[$i]] = $i;
         }
         return $reverse;
     }
-
-    public function __toString() {
-        return json_encode([$this->encode, $this->decode]);
-    }
 }
 
-main("hello world");
+main($argv);

@@ -9,7 +9,7 @@ import tempfile
 import time
 
 WORKDIR = os.path.dirname(__file__)
-BINARY = os.path.join(WORKDIR, "target", "release", "codech")
+BINARY = os.path.join(WORKDIR, "codech.php")
 KEY = os.path.join(WORKDIR, "key.txt")
 
 
