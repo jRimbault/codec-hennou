@@ -9,21 +9,16 @@ function main(array $argv) {
     } else {
         $result = decode($matrix, $content);
     }
+    // file_put_contents("codech.log", pack("c*", ...$result));
     binWrite($argv[4], $result);
 }
 
-function binRead(string $filename) {
-    $handle = fopen($filename, "rb");
-    $contents = fread($handle, filesize($filename));
-    fclose($handle);
-    return array_values(unpack("c*", $contents));
+function binRead(string $filename): array {
+    return array_values(unpack("c*", file_get_contents($filename)));
 }
 
-function binWrite(string $filename, $contents) {
-    $handle = fopen($filename, "wb");
-    /** pack("c*", $contents) didn't work ?? */
-    fwrite($handle, join('', array_map(fn($c) => chr($c), $contents)));
-    fclose($handle);
+function binWrite(string $filename, array $contents) {
+    file_put_contents($filename, pack("c*", ...$contents));
 }
 
 /**
@@ -59,7 +54,7 @@ function decode(Matrix $matrix, array $bytes): array {
 class Matrix {
     /**
      * @var int[]
-    */
+     */
     public array $encode;
     /**
      * @var int[]
