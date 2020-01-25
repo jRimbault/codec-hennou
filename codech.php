@@ -6,19 +6,28 @@ function main(array $argv) {
     $content = binRead($argv[3]);
     if ($argv[2] === "--encode" || $argv[2] === "-e") {
         $result = encode($matrix, $content);
+        file_put_contents(
+            "codech.log",
+            pack("c*", ...decode($matrix, $result)),
+            FILE_APPEND
+        );
     } else {
         $result = decode($matrix, $content);
     }
-    // file_put_contents("codech.log", pack("c*", ...$result));
     binWrite($argv[4], $result);
 }
 
 function binRead(string $filename): array {
-    return array_values(unpack("c*", file_get_contents($filename)));
+    $handle = fopen($filename, "rb");
+    $content = fread($handle, filesize($filename));
+    fclose($handle);
+    return array_values(unpack("c*", $content));
 }
 
 function binWrite(string $filename, array $contents) {
-    file_put_contents($filename, pack("c*", ...$contents));
+    $handle = fopen($filename, "wb");
+    fwrite($handle, pack("c*", ...$contents));
+    fclose($handle);
 }
 
 /**
