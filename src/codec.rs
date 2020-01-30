@@ -27,8 +27,8 @@ impl Codec {
 
 fn encode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
     let mut encoded = Vec::with_capacity(stream.len() * 2);
-    for byte in stream {
-        let [byte0, byte1] = matrix.encode(*byte);
+    for &byte in stream {
+        let [byte0, byte1] = matrix.encode(byte);
         encoded.push(byte0);
         encoded.push(byte1);
     }

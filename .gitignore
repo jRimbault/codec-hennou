@@ -313,3 +313,6 @@ $RECYCLE.BIN/
 **/*.rs.bk
 bin/
 obj/
+*.data
+*.data.old
+.mypy_cache/

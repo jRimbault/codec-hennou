@@ -191,6 +191,6 @@ if __name__ == "__main__":
         exitcode = 1
         print()
     except Exception as error:
-        print(error.with_traceback())
+        print(error)
     cleanup(args.file)
     exit(exitcode)

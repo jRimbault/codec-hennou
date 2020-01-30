@@ -33,7 +33,8 @@ impl Matrix {
                     .collect::<Vec<u8>>()
             })
             .and_then(|key| if key.len() == 4 { Some(key) } else { None })
-            .map(|key| Matrix::from_key(key[..4].try_into().unwrap()))
+            .and_then(|key| key[..4].try_into().ok())
+            .map(|key| Matrix::from_key(key))
     }
 
     pub fn from_key(key: [u8; 4]) -> Self {
