@@ -13,7 +13,7 @@ namespace codech
         private Matrix(IList<byte> matrix)
         {
             this.Encode = matrix;
-            this.Decode = new byte[255];
+            this.Decode = new byte[256];
             for (byte i = 0; i < matrix.Count; i += 1) {
                 this.Decode[matrix[i]] = i;
             }
