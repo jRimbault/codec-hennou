@@ -23,16 +23,15 @@ namespace codech
 
         public IEnumerable<byte> Decode(IEnumerable<byte> stream)
         {
-            var couple = new List<byte>(2);
+            var couple = new Queue<byte>(2);
             foreach (byte b in stream)
             {
-                couple.Add(b);
+                couple.Enqueue(b);
                 if (couple.Count == 2)
                 {
-                    byte p1 = _matrix.Decode[couple[0]];
-                    var p2 = (byte) (_matrix.Decode[couple[1]] << 4);
+                    byte p1 = _matrix.Decode[couple.Dequeue()];
+                    var p2 = (byte) (_matrix.Decode[couple.Dequeue()] << 4);
                     yield return (byte) (p1 | p2);
-                    couple.Clear();
                 }
             }
         }

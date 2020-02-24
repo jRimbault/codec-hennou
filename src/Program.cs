@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -39,7 +40,13 @@ namespace codech
             TimeSpan writeEnd = DateTime.Now - writeStart;
             if (timings)
             {
-                Console.WriteLine($"{readEnd.TotalSeconds} {workEnd.TotalSeconds} {writeEnd.TotalSeconds}");
+                string[] formattedTimes = new[]
+                {
+                    readEnd,
+                    workEnd,
+                    writeEnd
+                }.Select(d => d.TotalSeconds.ToString(CultureInfo.InvariantCulture)).ToArray();
+                Console.WriteLine(string.Join(" ", formattedTimes));
             }
         }
 

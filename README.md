@@ -11,4 +11,8 @@ Ou, plus simplement:
 make bench
 ```
 
+Maximum atteint sous Windows (très décevant) : 54±2Mo/s (encode & decode)
+
+Sous linux (comme toutes les autres benchmarks) :
+
 [![asciicast](https://asciinema.org/a/vav1lWD6Ju78KFT375HWXxake.svg)](https://asciinema.org/a/vav1lWD6Ju78KFT375HWXxake)

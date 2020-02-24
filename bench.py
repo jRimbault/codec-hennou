@@ -8,10 +8,10 @@ import sys
 import tempfile
 import time
 
+DIR = "win10-x64" if os.name == "nt" else "linux-x64"
+EXE = "codech.exe" if os.name == "nt" else "codech"
 WORKDIR = os.path.dirname(__file__)
-BINARY = os.path.join(
-    WORKDIR, "bin", "Release", "netcoreapp3.1", "linux-x64", "publish", "codech"
-)
+BINARY = os.path.join(WORKDIR, "bin", "Release", "netcoreapp3.1", DIR, "publish", EXE)
 KEY = os.path.join(WORKDIR, "key.txt")
 
 
@@ -103,7 +103,10 @@ def execute(args, source, dest, word, flag, size):
 
 
 def execute_codec(args, action, source, dest):
-    cmd = f"{args.binary} {args.key} {action} {source} {dest}".split()
+    cmd = (
+        ("powershell" if os.name == "nt" else "")
+        + f"{args.binary} {args.key} {action} {source} {dest}"
+    ).split()
     if args.timings:
         cmd.append("--timings")
     else:
@@ -193,6 +196,6 @@ if __name__ == "__main__":
         exitcode = 1
         print()
     except Exception as error:
-        print(error.with_traceback())
+        print(error)
     cleanup(args.file)
     exit(exitcode)
