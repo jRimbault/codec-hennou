@@ -9,15 +9,15 @@ namespace codech
 
         public Codec(Matrix matrix)
         {
-            this._matrix = matrix;
+            _matrix = matrix;
         }
 
         public IEnumerable<byte> Encode(IEnumerable<byte> stream)
         {
             foreach (byte b in stream)
             {
-                yield return this._matrix.Encode[b & Mask];
-                yield return this._matrix.Encode[(b >> 4) & Mask];
+                yield return _matrix.Encode[b & Mask];
+                yield return _matrix.Encode[(b >> 4) & Mask];
             }
         }
 
@@ -29,8 +29,8 @@ namespace codech
                 couple.Add(b);
                 if (couple.Count == 2)
                 {
-                    byte p1 = this._matrix.Decode[couple[0]];
-                    var p2 = (byte) (this._matrix.Decode[couple[1]] << 4);
+                    byte p1 = _matrix.Decode[couple[0]];
+                    var p2 = (byte) (_matrix.Decode[couple[1]] << 4);
                     yield return (byte) (p1 | p2);
                     couple.Clear();
                 }

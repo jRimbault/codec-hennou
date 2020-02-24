@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -7,15 +6,16 @@ namespace codech
 {
     internal class Matrix
     {
-        public IList<byte> Encode { get; }
-        public IList<byte> Decode { get; }
+        public byte[] Decode;
+        public byte[] Encode;
 
-        private Matrix(IList<byte> matrix)
+        private Matrix(byte[] matrix)
         {
-            this.Encode = matrix;
-            this.Decode = new byte[256];
-            for (byte i = 0; i < matrix.Count; i += 1) {
-                this.Decode[matrix[i]] = i;
+            Encode = matrix;
+            Decode = new byte[256];
+            for (byte i = 0; i < matrix.Length; i += 1)
+            {
+                Decode[matrix[i]] = i;
             }
         }
 
@@ -49,10 +49,10 @@ namespace codech
         private static byte[] ReadKey(string filename)
         {
             return File.ReadAllText(filename)
-                .Substring(5, 35)
-                .Split(' ')
-                .Select(bin => Convert.ToByte(bin, 2))
-                .ToArray();
+                       .Substring(5, 35)
+                       .Split(' ')
+                       .Select(bin => Convert.ToByte(bin, 2))
+                       .ToArray();
         }
     }
 }

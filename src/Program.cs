@@ -2,14 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using codech.Extensions;
 
 namespace codech
 {
     internal class Program
     {
-        private delegate IEnumerable<byte> CodecWorker(IEnumerable<byte> stream);
-
         private static void Main(string[] args)
         {
             var codec = new Codec(Matrix.From(args[0]));
@@ -26,21 +23,22 @@ namespace codech
 
         private static void Work(CodecWorker worker, string source, string dest, bool timings)
         {
-            var readStart = DateTime.Now;
-            var content = File.ReadAllBytes(source);
-            var readEnd = DateTime.Now - readStart;
-            var workStart = DateTime.Now;
-            var result = worker(content).ToArray();
+            DateTime readStart = DateTime.Now;
+            byte[] content = File.ReadAllBytes(source);
+            TimeSpan readEnd = DateTime.Now - readStart;
+            DateTime workStart = DateTime.Now;
+            byte[] result = worker(content).ToArray();
             // byte[] result = content.ToList().Chunk(ChunkSize(content.Length))
             //                        .AsParallel()
             //                        .AsOrdered()
             //                        .SelectMany(c => worker(c))
             //                        .ToArray();
-            var workEnd = DateTime.Now - workStart;
-            var writeStart = DateTime.Now;
+            TimeSpan workEnd = DateTime.Now - workStart;
+            DateTime writeStart = DateTime.Now;
             File.WriteAllBytes(dest, result);
-            var writeEnd = DateTime.Now - writeStart;
-            if (timings) {
+            TimeSpan writeEnd = DateTime.Now - writeStart;
+            if (timings)
+            {
                 Console.WriteLine($"{readEnd.TotalSeconds} {workEnd.TotalSeconds} {writeEnd.TotalSeconds}");
             }
         }
@@ -51,11 +49,16 @@ namespace codech
             {
                 return len;
             }
+
             int res = len / Environment.ProcessorCount;
-            if (res % 2 == 1) {
+            if (res % 2 == 1)
+            {
                 return res - 1;
             }
+
             return res;
         }
+
+        private delegate IEnumerable<byte> CodecWorker(IEnumerable<byte> stream);
     }
 }
