@@ -40,7 +40,7 @@ fn run(args: ArgMatches<'static>) -> Option<io::Error> {
                 Ok(key[5..40].to_owned())
             }
         })
-        .and_then(|key| Matrix::from_raw(key).ok_or(Error::new(InvalidData, "Invalid key")))
+        .and_then(|key| Matrix::from_raw(key).ok_or_else(|| Error::new(InvalidData, "Invalid key")))
         .map(|matrix| Codec::new(matrix, num_cpus::get()))
         .map(|codec| execute(args, codec))
         .err()

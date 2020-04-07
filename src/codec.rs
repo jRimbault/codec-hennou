@@ -16,16 +16,18 @@ impl Codec {
 
     pub fn encode(&self, stream: Vec<u8>) -> Vec<Vec<u8>> {
         let size = chunk_size(stream.len(), self.max_workers);
-        parallel_codec(|s| encode(self.matrix, s), stream, size)
+        parallel_codec(|s| encode(&self.matrix, s), stream, size)
     }
 
     pub fn decode(&self, stream: Vec<u8>) -> Vec<Vec<u8>> {
         let size = chunk_size(stream.len(), self.max_workers);
-        parallel_codec(|s| decode(self.matrix, s), stream, size)
+        parallel_codec(|s| decode(&self.matrix, s), stream, size)
     }
 }
 
-fn encode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
+fn encode(matrix: &Matrix, stream: &[u8]) -> Vec<u8> {
+    // it seems using a *constant small number* of `push`
+    // is faster than using `extend` on a Vec
     let mut encoded = Vec::with_capacity(stream.len() * 2);
     for &byte in stream {
         let [byte0, byte1] = matrix.encode(byte);
@@ -35,7 +37,7 @@ fn encode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
     encoded
 }
 
-fn decode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
+fn decode(matrix: &Matrix, stream: &[u8]) -> Vec<u8> {
     // this is safe to do for decoding because the encoding split each
     // byte into two bytes, hence a file encoded with this program
     // will always have an even number of bytes
@@ -91,7 +93,7 @@ mod codec_tests {
     fn should_encode_and_decode(original: &str) {
         let clear = original.as_bytes().to_vec();
         let matrix = Matrix::from_key([12, 16, 254, 24]);
-        let decoded = decode(matrix, &encode(matrix, &clear));
+        let decoded = decode(&matrix, &encode(&matrix, &clear));
         assert_eq!(clear, decoded);
     }
 
@@ -113,7 +115,7 @@ mod codec_tests {
     fn should_encode_decode_random(n: usize) {
         let random_bytes = random(n);
         let matrix = Matrix::from_raw(KEY).unwrap();
-        let decoded = decode(matrix, &encode(matrix, &random_bytes));
+        let decoded = decode(&matrix, &encode(&matrix, &random_bytes));
         assert_eq!(random_bytes, decoded);
     }
 }

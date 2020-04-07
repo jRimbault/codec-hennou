@@ -34,12 +34,12 @@ impl Matrix {
             })
             .and_then(|key| if key.len() == 4 { Some(key) } else { None })
             .and_then(|key| key[..4].try_into().ok())
-            .map(|key| Matrix::from_key(key))
+            .map(Matrix::from_key)
     }
 
     pub fn from_key(key: [u8; 4]) -> Self {
-        let encode = get_encode_matrix(key);
-        let decode = get_decode_matrix(encode);
+        let encode = get_encode_matrix(&key);
+        let decode = get_decode_matrix(&encode);
         Matrix { encode, decode }
     }
 
@@ -62,33 +62,33 @@ impl Matrix {
     }
 }
 
-fn get_decode_matrix(matrix: EncodeMatrix) -> DecodeMatrix {
-    let mut lookup: DecodeMatrix = [0; 256];
+fn get_decode_matrix(matrix: &EncodeMatrix) -> DecodeMatrix {
+    let mut lookup = [0; 256];
     for (i, val) in matrix.iter().enumerate() {
         lookup[*val as usize] = i as u8;
     }
     lookup
 }
 
-fn get_encode_matrix(key: [u8; 4]) -> EncodeMatrix {
-    // explicit layout to make direct lookups during
-    // the encode phase and facilitate the decode phase
-    let mut matrix: EncodeMatrix = [0; 16];
-    matrix[15] = 0;
-    matrix[1] = key[3];
-    matrix[2] = key[2];
-    matrix[3] = key[2] ^ key[3];
-    matrix[4] = key[1];
-    matrix[5] = key[1] ^ key[3];
-    matrix[6] = key[1] ^ key[2];
-    matrix[7] = key[1] ^ key[2] ^ key[3];
-    matrix[8] = key[0];
-    matrix[9] = key[0] ^ key[3];
-    matrix[10] = key[0] ^ key[2];
-    matrix[11] = key[0] ^ key[2] ^ key[3];
-    matrix[12] = key[0] ^ key[1];
-    matrix[13] = key[0] ^ key[1] ^ key[3];
-    matrix[14] = key[0] ^ key[1] ^ key[2];
-    matrix[0] = key[0] ^ key[1] ^ key[2] ^ key[3];
-    matrix
+/// explicit layout to make direct lookups during
+/// the encode phase and facilitate the decode phase
+fn get_encode_matrix(key: &[u8; 4]) -> EncodeMatrix {
+    [
+        key[0] ^ key[1] ^ key[2] ^ key[3],
+        key[3],
+        key[2],
+        key[2] ^ key[3],
+        key[1],
+        key[1] ^ key[3],
+        key[1] ^ key[2],
+        key[1] ^ key[2] ^ key[3],
+        key[0],
+        key[0] ^ key[3],
+        key[0] ^ key[2],
+        key[0] ^ key[2] ^ key[3],
+        key[0] ^ key[1],
+        key[0] ^ key[1] ^ key[3],
+        key[0] ^ key[1] ^ key[2],
+        0,
+    ]
 }
