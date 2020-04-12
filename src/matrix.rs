@@ -1,4 +1,4 @@
-use std::convert::TryInto;
+use std::convert::{From, TryInto};
 use std::str;
 
 type EncodeMatrix = [u8; 16];
@@ -26,21 +26,10 @@ impl Matrix {
                     None
                 }
             })
-            .map(|keytext| {
-                keytext
-                    .split_whitespace()
-                    .filter_map(|bin| u8::from_str_radix(&bin, 2).ok())
-                    .collect::<Vec<u8>>()
-            })
+            .map(|text| binary_repr(text))
             .and_then(|key| if key.len() == 4 { Some(key) } else { None })
             .and_then(|key| key[..4].try_into().ok())
-            .map(Matrix::from_key)
-    }
-
-    pub fn from_key(key: [u8; 4]) -> Self {
-        let encode = get_encode_matrix(&key);
-        let decode = get_decode_matrix(&encode);
-        Matrix { encode, decode }
+            .map(|key: [u8; 4]| key.into())
     }
 
     pub fn encode(&self, byte: u8) -> [u8; 2] {
@@ -62,6 +51,14 @@ impl Matrix {
     }
 }
 
+impl From<[u8; 4]> for Matrix {
+    fn from(key: [u8; 4]) -> Matrix {
+        let encode = get_encode_matrix(key);
+        let decode = get_decode_matrix(&encode);
+        Matrix { encode, decode }
+    }
+}
+
 fn get_decode_matrix(matrix: &EncodeMatrix) -> DecodeMatrix {
     let mut lookup = [0; 256];
     for (i, val) in matrix.iter().enumerate() {
@@ -72,7 +69,7 @@ fn get_decode_matrix(matrix: &EncodeMatrix) -> DecodeMatrix {
 
 /// explicit layout to make direct lookups during
 /// the encode phase and facilitate the decode phase
-fn get_encode_matrix(key: &[u8; 4]) -> EncodeMatrix {
+fn get_encode_matrix(key: [u8; 4]) -> EncodeMatrix {
     [
         key[0] ^ key[1] ^ key[2] ^ key[3],
         key[3],
@@ -91,4 +88,38 @@ fn get_encode_matrix(key: &[u8; 4]) -> EncodeMatrix {
         key[0] ^ key[1] ^ key[2],
         0,
     ]
+}
+
+fn binary_repr(text: &str) -> Vec<u8> {
+    text.split_whitespace()
+        .filter_map(|bin| u8::from_str_radix(&bin, 2).ok())
+        .collect()
+}
+
+#[cfg(test)]
+#[cfg_attr(tarpaulin, skip)]
+mod matrix_tests {
+    use super::*;
+    use rstest::rstest_parametrize;
+
+    #[test]
+    fn should_get_matrix() {
+        let text = "01011100 00011101 10100100 10010010";
+        let matrix = Matrix::from_raw(text);
+        assert!(matrix.is_some())
+    }
+
+    #[rstest_parametrize(
+        text,
+        case("01011100 00011101 10102100 10010010"),
+        case("abcdefghijklmnopqrstuvwxyza"),
+        case("01011100 00011101 10010010"),
+        case(""),
+        case("01011100 00011101 10102100 10010010 01011100"),
+        case("01011100 0001 110110101100 10010010")
+    )]
+    fn should_not_get_matrix(text: &str) {
+        let matrix = Matrix::from_raw(text);
+        assert!(matrix.is_none())
+    }
 }

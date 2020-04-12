@@ -3,7 +3,6 @@ use crate::build_info;
 use clap::{App, Arg, ArgGroup, ArgMatches};
 use std::convert;
 use std::ffi::OsString;
-use std::fmt;
 
 pub enum Argument {
     KeyFile,
@@ -96,18 +95,13 @@ impl Argument {
     }
 }
 
-impl fmt::Display for Argument {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str(self.as_str())
-    }
-}
-
 impl convert::AsRef<str> for Argument {
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
+#[cfg_attr(tarpaulin, skip)]
 #[test]
 fn should_parse_args() {
     let args = parse_args("codech key source dest -e".split_whitespace());

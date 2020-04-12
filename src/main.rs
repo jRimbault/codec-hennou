@@ -18,6 +18,7 @@ use std::io::prelude::*;
 use std::process;
 use std::time::Instant;
 
+#[cfg_attr(tarpaulin, skip)]
 fn main() {
     process::exit(match run(parse_args(env::args())) {
         None => exitcode::OK,
@@ -28,6 +29,7 @@ fn main() {
     })
 }
 
+#[cfg_attr(tarpaulin, skip)]
 fn run(args: ArgMatches<'static>) -> Option<io::Error> {
     use io::{Error, ErrorKind::InvalidData};
     let keyfile = args.value_of(Argument::KeyFile).unwrap();
@@ -46,14 +48,16 @@ fn run(args: ArgMatches<'static>) -> Option<io::Error> {
         .err()
 }
 
+#[cfg_attr(tarpaulin, skip)]
 fn execute(args: ArgMatches<'static>, codec: Codec) -> io::Result<()> {
     if args.is_present(Argument::Encode) {
-        io_codec(args, |bytes| codec.encode(bytes))
+        io_codec(args, |bytes| codec.encode(&bytes))
     } else {
-        io_codec(args, |bytes| codec.decode(bytes))
+        io_codec(args, |bytes| codec.decode(&bytes))
     }
 }
 
+#[cfg_attr(tarpaulin, skip)]
 fn io_codec<Converter>(args: ArgMatches<'static>, codec: Converter) -> io::Result<()>
 where
     Converter: Fn(Vec<u8>) -> Vec<Vec<u8>>,
