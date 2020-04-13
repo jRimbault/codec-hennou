@@ -1,5 +1,6 @@
 # Projet "encodage"
 
+[![codecov](https://codecov.io/gh/jRimbault/codech/branch/master/graph/badge.svg)](https://codecov.io/gh/jRimbault/codech)
 
 Pour tester:
 ```sh
