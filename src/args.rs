@@ -101,7 +101,6 @@ impl convert::AsRef<str> for Argument {
     }
 }
 
-#[cfg_attr(tarpaulin, skip)]
 #[test]
 fn should_parse_args() {
     let args = parse_args("codech key source dest -e".split_whitespace());

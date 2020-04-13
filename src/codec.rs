@@ -14,20 +14,18 @@ impl Codec {
         }
     }
 
-    pub fn encode(&self, stream: &[u8]) -> Vec<Vec<u8>> {
+    pub fn encode(&self, stream: Vec<u8>) -> Vec<Vec<u8>> {
         let size = chunk_size(stream.len(), self.max_workers);
-        parallel_codec(|s| encode(&self.matrix, s), stream, size)
+        parallel_codec(|s| encode(self.matrix, s), stream, size)
     }
 
-    pub fn decode(&self, stream: &[u8]) -> Vec<Vec<u8>> {
+    pub fn decode(&self, stream: Vec<u8>) -> Vec<Vec<u8>> {
         let size = chunk_size(stream.len(), self.max_workers);
-        parallel_codec(|s| decode(&self.matrix, s), stream, size)
+        parallel_codec(|s| decode(self.matrix, s), stream, size)
     }
 }
 
-fn encode(matrix: &Matrix, stream: &[u8]) -> Vec<u8> {
-    // it seems using a *constant small number* of `push`
-    // is faster than using `extend` on a Vec
+fn encode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
     let mut encoded = Vec::with_capacity(stream.len() * 2);
     for &byte in stream {
         let [byte0, byte1] = matrix.encode(byte);
@@ -37,7 +35,7 @@ fn encode(matrix: &Matrix, stream: &[u8]) -> Vec<u8> {
     encoded
 }
 
-fn decode(matrix: &Matrix, stream: &[u8]) -> Vec<u8> {
+fn decode(matrix: Matrix, stream: &[u8]) -> Vec<u8> {
     // this is safe to do for decoding because the encoding split each
     // byte into two bytes, hence a file encoded with this program
     // will always have an even number of bytes
@@ -48,7 +46,7 @@ fn decode(matrix: &Matrix, stream: &[u8]) -> Vec<u8> {
     decoded
 }
 
-fn parallel_codec<Worker>(task: Worker, stream: &[u8], chunk_size: usize) -> Vec<Vec<u8>>
+fn parallel_codec<Worker>(task: Worker, stream: Vec<u8>, chunk_size: usize) -> Vec<Vec<u8>>
 where
     Worker: Fn(&[u8]) -> Vec<u8>,
     Worker: Send + Sync,
@@ -71,7 +69,6 @@ fn chunk_size(stream_len: usize, max_workers: usize) -> usize {
 }
 
 #[cfg(test)]
-#[cfg_attr(tarpaulin, skip)]
 mod codec_tests {
     use super::*;
     use rstest::rstest_parametrize;
@@ -88,7 +85,7 @@ mod codec_tests {
     fn should_encode_and_decode(original: &str) {
         let clear = original.as_bytes().to_vec();
         let matrix = From::from([12, 16, 254, 24]);
-        let decoded = decode(&matrix, &encode(&matrix, &clear));
+        let decoded = decode(matrix, &encode(matrix, &clear));
         assert_eq!(clear, decoded);
     }
 
@@ -110,7 +107,7 @@ mod codec_tests {
     fn should_encode_decode_random(n: usize) {
         let random_bytes = random(n);
         let matrix = From::from([12, 16, 254, 24]);
-        let decoded = decode(&matrix, &encode(&matrix, &random_bytes));
+        let decoded = decode(matrix, &encode(matrix, &random_bytes));
         assert_eq!(random_bytes, decoded);
     }
 
@@ -123,16 +120,16 @@ mod codec_tests {
     fn should_encode_decode_random_using_codec_struct(n: usize) {
         let random_bytes = random(n);
         let codec = Codec::new([12, 16, 254, 24].into(), 1);
-        let encoded = codec.encode(&random_bytes);
-        let decoded = codec.decode(&encoded[0]);
+        let encoded = codec.encode(random_bytes.clone());
+        let decoded = codec.decode(encoded[0].clone());
         assert_eq!(vec![random_bytes], decoded);
     }
 
     #[test]
     fn should_map_and_chunk() {
-        let ret = parallel_codec(|x| x.iter().map(|y| y + 1).collect(), &vec![0, 1], 1);
+        let ret = parallel_codec(|x| x.iter().map(|y| y + 1).collect(), vec![0, 1], 1);
         assert_eq!(ret, vec![vec![1], vec![2]]);
-        let ret = parallel_codec(|x| x.iter().map(|y| y + 1).collect(), &vec![0, 1], 2);
+        let ret = parallel_codec(|x| x.iter().map(|y| y + 1).collect(), vec![0, 1], 2);
         assert_eq!(ret, vec![vec![1, 2]]);
     }
 

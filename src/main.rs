@@ -51,9 +51,9 @@ fn run(args: ArgMatches<'static>) -> Option<io::Error> {
 #[cfg_attr(tarpaulin, skip)]
 fn execute(args: ArgMatches<'static>, codec: Codec) -> io::Result<()> {
     if args.is_present(Argument::Encode) {
-        io_codec(args, |bytes| codec.encode(&bytes))
+        io_codec(args, |bytes| codec.encode(bytes))
     } else {
-        io_codec(args, |bytes| codec.decode(&bytes))
+        io_codec(args, |bytes| codec.decode(bytes))
     }
 }
 
