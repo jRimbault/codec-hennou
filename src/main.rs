@@ -1,28 +1,51 @@
 #![forbid(unsafe_code)]
 
-mod args;
-mod build_info;
 mod codec;
 mod matrix;
 
-use args::{parse_args, Argument};
-use clap::ArgMatches;
 use codec::Codec;
 use exitcode;
 use matrix::Matrix;
-use std::env;
 use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
+use std::path::PathBuf;
 use std::process;
 use std::time::Instant;
+use structopt::{clap::ArgGroup, StructOpt};
+
+#[derive(Clone, StructOpt, Debug)]
+#[structopt(group = ArgGroup::with_name("action").required(true))]
+struct Arguments {
+    /// File containing a G4C key
+    ///
+    /// The first line of the file should be like the following :
+    ///
+    /// ```
+    /// G4C=[10001111 11000111 10100100 10010010]
+    /// ```
+    keyfile: PathBuf,
+    /// File to encode or decode
+    source: PathBuf,
+    /// Output file
+    dest: PathBuf,
+    /// Action to execute on the source file
+    #[structopt(short, long, group = "action")]
+    encode: bool,
+    /// Action to execute on the source file
+    #[structopt(short, long, group = "action")]
+    decode: bool,
+    /// Output codec execution duration (seconds)
+    #[structopt(short, long)]
+    timings: bool,
+}
 
 #[cfg_attr(tarpaulin, skip)]
 fn main() {
-    process::exit(match run(parse_args(env::args())) {
-        None => exitcode::OK,
-        Some(error) => {
+    process::exit(match run(Arguments::from_args()) {
+        Ok(_) => exitcode::OK,
+        Err(error) => {
             println!("{}", error);
             error.raw_os_error().unwrap_or(exitcode::SOFTWARE)
         }
@@ -30,10 +53,9 @@ fn main() {
 }
 
 #[cfg_attr(tarpaulin, skip)]
-fn run(args: ArgMatches<'static>) -> Option<io::Error> {
+fn run(args: Arguments) -> io::Result<()> {
     use io::{Error, ErrorKind::InvalidData};
-    let keyfile = args.value_of(Argument::KeyFile).unwrap();
-    fs::read_to_string(keyfile)
+    fs::read_to_string(&args.keyfile)
         .map(|key| key.trim().to_owned())
         .and_then(|key| {
             if key.len() < 40 {
@@ -44,37 +66,32 @@ fn run(args: ArgMatches<'static>) -> Option<io::Error> {
         })
         .and_then(|key| Matrix::from_raw(key).ok_or_else(|| Error::new(InvalidData, "Invalid key")))
         .map(|matrix| Codec::new(matrix, num_cpus::get()))
-        .map(|codec| execute(args, codec))
-        .err()
+        .and_then(|codec| {
+            if args.encode {
+                io_codec(args, |bytes| codec.encode(bytes))
+            } else {
+                io_codec(args, |bytes| codec.decode(bytes))
+            }
+        })
 }
 
 #[cfg_attr(tarpaulin, skip)]
-fn execute(args: ArgMatches<'static>, codec: Codec) -> io::Result<()> {
-    if args.is_present(Argument::Encode) {
-        io_codec(args, |bytes| codec.encode(bytes))
-    } else {
-        io_codec(args, |bytes| codec.decode(bytes))
-    }
-}
-
-#[cfg_attr(tarpaulin, skip)]
-fn io_codec<Converter>(args: ArgMatches<'static>, codec: Converter) -> io::Result<()>
+fn io_codec<Converter>(args: Arguments, codec: Converter) -> io::Result<()>
 where
     Converter: Fn(Vec<u8>) -> Vec<Vec<u8>>,
 {
-    use Argument::*;
     let read_start = Instant::now();
-    let source = fs::read(args.value_of(Source).unwrap())?;
+    let source = fs::read(args.source)?;
     let read_end = read_start.elapsed();
     let encoding_start = Instant::now();
     let result = codec(source);
     let encoding_end = encoding_start.elapsed();
     let write_start = Instant::now();
-    let mut dest = File::create(args.value_of(Dest).unwrap())?;
+    let mut dest = File::create(args.dest)?;
     for part in result {
         dest.write_all(&part)?;
     }
-    if args.is_present(Timings) {
+    if args.timings {
         println!(
             "{} {} {}",
             read_end.as_secs_f32(),
