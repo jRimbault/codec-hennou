@@ -1,4 +1,16 @@
-use std::str;
+pub mod error;
+
+use error::{MatrixError, MatrixErrorKind};
+use std::str::FromStr;
+
+/// I could make the EncodeLookup a [[u8; 2]; 256] pre-filled with
+/// everything, but after testing that, the gain is actually
+/// not very noticeable.
+/// Until I find a better way to do it, I'll abstain.
+/// The DecodeLookup cannot be fully pre-computed, but it could
+/// be composed of 2 [u8; 256], one filled with pre-shifted values,
+/// the gain here is even more marginal.
+/// That makes sense since the operation is already O(n)...
 
 #[derive(Copy, Clone)]
 struct EncodeLookup([u8; 16]);
@@ -11,33 +23,34 @@ pub struct Matrix {
     decode: DecodeLookup,
 }
 
-impl Matrix {
-    /// Takes a slice of bytes with a similar ASCII representation to :
-    ///
-    /// `b"10101111 11111111 10101100 10011010"`
-    ///
-    /// This slice should be 35 characters long, including whitespace
-    pub fn from_raw<T: Into<Vec<u8>>>(raw: T) -> Option<Self> {
-        fn binary_repr(text: &str) -> Vec<u8> {
-            text.split_whitespace()
-                .filter_map(|bin| u8::from_str_radix(&bin, 2).ok())
-                .collect()
+impl From<[u8; 4]> for Matrix {
+    fn from(key: [u8; 4]) -> Matrix {
+        let encode = key.into();
+        Matrix {
+            encode,
+            decode: encode.into(),
         }
-
-        str::from_utf8(&raw.into())
-            .ok()
-            .and_then(|keytext| {
-                if keytext.len() == 35 {
-                    Some(keytext)
-                } else {
-                    None
-                }
-            })
-            .map(|keytext| binary_repr(keytext))
-            .and_then(|key| if key.len() == 4 { Some(key) } else { None })
-            .map(|key| [key[0], key[1], key[2], key[3]].into())
     }
+}
 
+impl FromStr for Matrix {
+    type Err = MatrixError;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        let key: Result<Vec<u8>, _> = value
+            .split_whitespace()
+            .map(|bin| u8::from_str_radix(&bin, 2))
+            .collect();
+        let key = key?;
+        if key.len() < 4 {
+            Err(MatrixError::new(MatrixErrorKind::KeyIsTooShort))
+        } else {
+            Ok([key[0], key[1], key[2], key[3]].into())
+        }
+    }
+}
+
+impl Matrix {
     pub fn encode(&self, byte: u8) -> [u8; 2] {
         const MASK: u8 = 0x0f;
         const SHIFT: u8 = 4;
@@ -54,16 +67,6 @@ impl Matrix {
             self.decode.0[byte1 as usize] << SHIFT,
         );
         p1 | p2
-    }
-}
-
-impl From<[u8; 4]> for Matrix {
-    fn from(key: [u8; 4]) -> Matrix {
-        let encode = key.into();
-        Matrix {
-            encode,
-            decode: encode.into(),
-        }
     }
 }
 
@@ -103,18 +106,18 @@ impl From<EncodeLookup> for DecodeLookup {
 }
 
 #[cfg(test)]
-mod matrix_tests {
+mod tests {
     use super::*;
-    use rstest::rstest_parametrize;
+    use rstest::rstest;
 
     #[test]
     fn should_get_matrix() {
         let text = "01011100 00011101 10100100 10010010";
-        let matrix = Matrix::from_raw(text);
-        assert!(matrix.is_some())
+        let matrix = text.parse::<Matrix>();
+        assert!(matrix.is_ok());
     }
 
-    #[rstest_parametrize(
+    #[rstest(
         text,
         case("01011100 00011101 10102100 10010010"),
         case("abcdefghijklmnopqrstuvwxyza"),
@@ -124,7 +127,7 @@ mod matrix_tests {
         case("01011100 0001 110110101100 10010010")
     )]
     fn should_not_get_matrix(text: &str) {
-        let matrix = Matrix::from_raw(text);
-        assert!(matrix.is_none())
+        let matrix = text.parse::<Matrix>();
+        assert!(matrix.is_err());
     }
 }

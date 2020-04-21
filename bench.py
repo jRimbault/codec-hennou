@@ -185,12 +185,14 @@ if __name__ == "__main__":
         copy = tempfile.mktemp()
         shutil.copyfile(args.file, copy)
         args.file = copy
+    exitcode = 0
     try:
         exitcode = main(args)
     except KeyboardInterrupt:
         exitcode = 1
         print()
     except Exception as error:
+        exitcode = 1
         print(error)
     cleanup(args.file)
     exit(exitcode)

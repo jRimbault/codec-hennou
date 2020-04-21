@@ -1,11 +1,8 @@
+#![deny(warnings)]
 #![forbid(unsafe_code)]
 
-mod codec;
-mod matrix;
-
-use codec::Codec;
-use exitcode;
-use matrix::Matrix;
+use codech::{codec::parallel::ParallelCodec, matrix::Matrix};
+use std::error;
 use std::fs;
 use std::fs::File;
 use std::io;
@@ -47,32 +44,20 @@ fn main() {
         Ok(_) => exitcode::OK,
         Err(error) => {
             println!("{}", error);
-            error.raw_os_error().unwrap_or(exitcode::SOFTWARE)
+            exitcode::SOFTWARE
         }
     })
 }
 
 #[cfg_attr(tarpaulin, skip)]
-fn run(args: Arguments) -> io::Result<()> {
-    use io::{Error, ErrorKind::InvalidData};
-    fs::read_to_string(&args.keyfile)
-        .map(|key| key.trim().to_owned())
-        .and_then(|key| {
-            if key.len() < 40 {
-                Err(Error::new(InvalidData, "Key too short"))
-            } else {
-                Ok(key[5..40].to_owned())
-            }
-        })
-        .and_then(|key| Matrix::from_raw(key).ok_or_else(|| Error::new(InvalidData, "Invalid key")))
-        .map(|matrix| Codec::new(matrix, num_cpus::get()))
-        .and_then(|codec| {
-            if args.encode {
-                io_codec(args, |bytes| codec.encode(bytes))
-            } else {
-                io_codec(args, |bytes| codec.decode(bytes))
-            }
-        })
+fn run(args: Arguments) -> Result<(), Box<dyn error::Error>> {
+    let key = fs::read_to_string(&args.keyfile)?;
+    let codec: ParallelCodec = key[5..40].parse::<Matrix>()?.into();
+    Ok(if args.encode {
+        io_codec(args, |bytes| codec.encode(bytes))
+    } else {
+        io_codec(args, |bytes| codec.decode(bytes))
+    }?)
 }
 
 #[cfg_attr(tarpaulin, skip)]
