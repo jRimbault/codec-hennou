@@ -26,24 +26,24 @@ namespace codech
 
         private static byte[] BuildMatrixFromKey(byte[] key)
         {
-            var matrix = new byte[16];
-            matrix[15] = 0;
-            matrix[1] = key[3];
-            matrix[2] = key[2];
-            matrix[3] = (byte) (key[2] ^ key[3]);
-            matrix[4] = key[1];
-            matrix[5] = (byte) (key[1] ^ key[3]);
-            matrix[6] = (byte) (key[1] ^ key[2]);
-            matrix[7] = (byte) (key[1] ^ key[2] ^ key[3]);
-            matrix[8] = key[0];
-            matrix[9] = (byte) (key[0] ^ key[3]);
-            matrix[10] = (byte) (key[0] ^ key[2]);
-            matrix[11] = (byte) (key[0] ^ key[2] ^ key[3]);
-            matrix[12] = (byte) (key[0] ^ key[1]);
-            matrix[13] = (byte) (key[0] ^ key[1] ^ key[3]);
-            matrix[14] = (byte) (key[0] ^ key[1] ^ key[2]);
-            matrix[0] = (byte) (key[0] ^ key[1] ^ key[2] ^ key[3]);
-            return matrix;
+            return new byte[] {
+                (byte) (key[0] ^ key[1] ^ key[2] ^ key[3]),
+                key[3],
+                key[2],
+                (byte) (key[2] ^ key[3]),
+                key[1],
+                (byte) (key[1] ^ key[3]),
+                (byte) (key[1] ^ key[2]),
+                (byte) (key[1] ^ key[2] ^ key[3]),
+                key[0],
+                (byte) (key[0] ^ key[3]),
+                (byte) (key[0] ^ key[2]),
+                (byte) (key[0] ^ key[2] ^ key[3]),
+                (byte) (key[0] ^ key[1]),
+                (byte) (key[0] ^ key[1] ^ key[3]),
+                (byte) (key[0] ^ key[1] ^ key[2]),
+                0,
+            };
         }
 
         private static byte[] ReadKey(string filename)

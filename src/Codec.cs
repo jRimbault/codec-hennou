@@ -30,8 +30,8 @@ namespace codech
                 if (couple.Count == 2)
                 {
                     byte p1 = _matrix.Decode[couple.Dequeue()];
-                    var p2 = (byte) (_matrix.Decode[couple.Dequeue()] << 4);
-                    yield return (byte) (p1 | p2);
+                    var p2 = (byte)(_matrix.Decode[couple.Dequeue()] << 4);
+                    yield return (byte)(p1 | p2);
                 }
             }
         }
