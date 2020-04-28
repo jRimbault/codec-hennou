@@ -1,6 +1,6 @@
 pub mod error;
 
-use error::{MatrixError, MatrixErrorKind};
+use error::MatrixError;
 use std::str::FromStr;
 
 /// I could make the EncodeLookup a [[u8; 2]; 256] pre-filled with
@@ -37,13 +37,13 @@ impl FromStr for Matrix {
     type Err = MatrixError;
 
     fn from_str(value: &str) -> Result<Self, Self::Err> {
-        let key: Result<Vec<u8>, _> = value
+        let key = value
             .split_whitespace()
+            .take(4)
             .map(|bin| u8::from_str_radix(&bin, 2))
-            .collect();
-        let key = key?;
+            .collect::<Result<Vec<u8>, _>>()?;
         if key.len() < 4 {
-            Err(MatrixError::new(MatrixErrorKind::KeyIsTooShort))
+            Err(MatrixError::KeyIsTooShort)
         } else {
             Ok([key[0], key[1], key[2], key[3]].into())
         }

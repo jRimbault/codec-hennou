@@ -12,24 +12,26 @@ impl Codec {
     pub fn encode(&self, stream: &[u8]) -> Vec<u8> {
         // it seems using a *constant small number* of `push`es
         // is faster than using `extend` on a Vec
-        let mut encoded = Vec::with_capacity(stream.len() * 2);
-        for &byte in stream {
-            let [byte0, byte1] = self.matrix.encode(byte);
-            encoded.push(byte0);
-            encoded.push(byte1);
-        }
-        encoded
+        // implementing a custom iterator to use flat_map and next 2 times
+        // is slower, and this allows pre-allocating exactly what will be needed
+        stream.iter().map(|&byte| self.matrix.encode(byte)).fold(
+            Vec::with_capacity(stream.len() * 2),
+            |mut encoded, bytes| {
+                encoded.push(bytes[0]);
+                encoded.push(bytes[1]);
+                encoded
+            },
+        )
     }
 
     pub fn decode(&self, stream: &[u8]) -> Vec<u8> {
         // this is safe to do for decoding because the encoding split each
         // byte into two bytes, hence a file encoded with this program
         // will always have an even number of bytes
-        let mut decoded = Vec::with_capacity(stream.len() / 2);
-        for bytes in stream.chunks(2) {
-            decoded.push(self.matrix.decode(bytes[0], bytes[1]));
-        }
-        decoded
+        stream
+            .chunks(2)
+            .map(|bytes| self.matrix.decode(bytes[0], bytes[1]))
+            .collect()
     }
 }
 

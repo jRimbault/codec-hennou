@@ -26,7 +26,7 @@ def main(args):
         original,
         encoded,
         "Encoding",
-        "--encode",
+        "encode",
         size if not args.size else args.size,
     )
     execute(
@@ -34,7 +34,7 @@ def main(args):
         encoded,
         decoded,
         "Decoding",
-        "--decode",
+        "decode",
         size if not args.size else args.size,
     )
     decoded_sum = checksum_file(decoded)
@@ -82,11 +82,11 @@ def execute(args, source, dest, word, flag, size):
     else:
         timings = [float(r) for r in res.split()]
         speeds = []
-        if flag == "--encode":
+        if flag == "encode":
             speeds.append(checked_division(size, timings[0]))
             speeds.append(checked_division(size, timings[1]))
             speeds.append(checked_division(size * 2, timings[2]))
-        if flag == "--decode":
+        if flag == "decode":
             speeds.append(checked_division(size * 2, timings[0]))
             speeds.append(checked_division(size, timings[1]))
             speeds.append(checked_division(size, timings[2]))

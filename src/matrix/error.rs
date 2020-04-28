@@ -3,48 +3,32 @@ use std::fmt;
 use std::num::ParseIntError;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum MatrixErrorKind {
+pub enum MatrixError {
     KeyIsTooShort,
     ParseError(ParseIntError),
 }
 
-#[derive(Debug, Clone)]
-pub struct MatrixError {
-    kind: MatrixErrorKind,
-}
-
-impl MatrixError {
-    pub fn new(kind: MatrixErrorKind) -> Self {
-        MatrixError { kind }
-    }
-
-    fn description(&self) -> String {
-        use MatrixErrorKind::*;
-        match &self.kind {
-            KeyIsTooShort => "key is too short".to_owned(),
-            ParseError(error) => error.to_string(),
-        }
-    }
-}
-
 impl fmt::Display for MatrixError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.description().fmt(f)
+        match self {
+            MatrixError::KeyIsTooShort => "key is too short".fmt(f),
+            MatrixError::ParseError(error) => error.fmt(f),
+        }
     }
 }
 
 impl Error for MatrixError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match &self.kind {
-            MatrixErrorKind::KeyIsTooShort => None,
-            MatrixErrorKind::ParseError(error) => Some(error),
+        match &self {
+            MatrixError::KeyIsTooShort => None,
+            MatrixError::ParseError(error) => Some(error),
         }
     }
 }
 
 impl From<ParseIntError> for MatrixError {
     fn from(error: ParseIntError) -> Self {
-        MatrixError::new(MatrixErrorKind::ParseError(error))
+        MatrixError::ParseError(error)
     }
 }
 
@@ -59,7 +43,7 @@ mod tests {
         let matrix = "01011100 00011101 10010010".parse::<Matrix>();
         assert!(matrix.is_err());
         let error = matrix.err().unwrap();
-        assert_eq!(error.kind, MatrixErrorKind::KeyIsTooShort);
+        assert_eq!(error, MatrixError::KeyIsTooShort);
     }
 
     #[rstest(
@@ -76,13 +60,13 @@ mod tests {
 
     #[test]
     fn it_should_produce_error_messages() {
-        let key_too_short = MatrixError::new(MatrixErrorKind::KeyIsTooShort);
-        assert_eq!(key_too_short.description(), "key is too short".to_owned());
+        let key_too_short = MatrixError::KeyIsTooShort;
+        assert_eq!(key_too_short.to_string(), "key is too short");
         let parse_error = u8::from_str_radix("", 2).err().unwrap();
-        let empty_string = MatrixError::new(MatrixErrorKind::ParseError(parse_error));
+        let empty_string = MatrixError::ParseError(parse_error);
         assert_eq!(
-            empty_string.description(),
-            "cannot parse integer from empty string".to_owned()
+            empty_string.to_string(),
+            "cannot parse integer from empty string"
         );
         assert_eq!(format!("{}", key_too_short), "key is too short");
         assert!(key_too_short.source().is_none());
