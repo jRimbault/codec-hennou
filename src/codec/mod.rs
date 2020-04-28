@@ -1,5 +1,3 @@
-pub mod parallel;
-
 use crate::matrix::Matrix;
 
 pub struct Codec {
