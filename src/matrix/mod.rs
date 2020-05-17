@@ -3,20 +3,19 @@ pub mod error;
 use error::MatrixError;
 use std::str::FromStr;
 
-/// I could make the EncodeLookup a [[u8; 2]; 256] pre-filled with
-/// everything, but after testing that, the gain is actually
-/// not very noticeable.
-/// Until I find a better way to do it, I'll abstain.
-/// The DecodeLookup cannot be fully pre-computed, but it could
-/// be composed of 2 [u8; 256], one filled with pre-shifted values,
-/// the gain here is even more marginal.
-/// That makes sense since the operation is already O(n)...
-
+/// specific layout to build the other lookups
 #[derive(Copy, Clone)]
-struct EncodeLookup([u8; 16]);
-#[derive(Copy, Clone)]
-struct DecodeLookup([u8; 256]);
+struct BaseLookup([u8; 16]);
 
+/// specific layout to make direct lookups during the encoding
+#[derive(Copy, Clone)]
+struct EncodeLookup([[u8; 2]; 256]);
+
+/// specific layout to make direct lookups during the decoding
+#[derive(Copy, Clone)]
+struct DecodeLookup([u8; 256], [u8; 256]);
+
+/// those data layout should allow for auto vectorization
 #[derive(Copy, Clone)]
 pub struct Matrix {
     encode: EncodeLookup,
@@ -25,10 +24,10 @@ pub struct Matrix {
 
 impl From<[u8; 4]> for Matrix {
     fn from(key: [u8; 4]) -> Matrix {
-        let encode = key.into();
+        let base: BaseLookup = key.into();
         Matrix {
-            encode,
-            decode: encode.into(),
+            encode: base.into(),
+            decode: base.into(),
         }
     }
 }
@@ -52,28 +51,17 @@ impl FromStr for Matrix {
 
 impl Matrix {
     pub fn encode(&self, byte: u8) -> [u8; 2] {
-        const MASK: u8 = 0x0f;
-        const SHIFT: u8 = 4;
-        [
-            self.encode.0[(byte & MASK) as usize],
-            self.encode.0[(byte >> SHIFT) as usize],
-        ]
+        self.encode.0[byte as usize]
     }
 
     pub fn decode(&self, byte0: u8, byte1: u8) -> u8 {
-        const SHIFT: u8 = 4;
-        let (p1, p2) = (
-            self.decode.0[byte0 as usize],
-            self.decode.0[byte1 as usize] << SHIFT,
-        );
-        p1 | p2
+        self.decode.0[byte0 as usize] | self.decode.1[byte1 as usize]
     }
 }
 
-impl From<[u8; 4]> for EncodeLookup {
-    /// specific layout to make direct lookups during the encoding
-    fn from(key: [u8; 4]) -> EncodeLookup {
-        EncodeLookup([
+impl From<[u8; 4]> for BaseLookup {
+    fn from(key: [u8; 4]) -> BaseLookup {
+        BaseLookup([
             key[0] ^ key[1] ^ key[2] ^ key[3],
             key[3],
             key[2],
@@ -94,14 +82,33 @@ impl From<[u8; 4]> for EncodeLookup {
     }
 }
 
-impl From<EncodeLookup> for DecodeLookup {
-    /// specific layout to make direct lookups during the decoding
-    fn from(encode_lookup: EncodeLookup) -> DecodeLookup {
+impl From<BaseLookup> for DecodeLookup {
+    fn from(base_lookup: BaseLookup) -> DecodeLookup {
         let mut lookup = [0; 256];
-        for (i, val) in encode_lookup.0.iter().enumerate() {
+        let mut lookup_shifted = [0; 256];
+        for (i, val) in base_lookup.0.iter().enumerate() {
             lookup[*val as usize] = i as u8;
+            lookup_shifted[*val as usize] = (i as u8) << 4;
         }
-        DecodeLookup(lookup)
+        DecodeLookup(lookup, lookup_shifted)
+    }
+}
+
+impl From<BaseLookup> for EncodeLookup {
+    fn from(base_lookup: BaseLookup) -> EncodeLookup {
+        fn encode(lookup: &[u8; 16], byte: u8) -> [u8; 2] {
+            const MASK: u8 = 0x0f;
+            const SHIFT: u8 = 4;
+            [
+                lookup[(byte & MASK) as usize],
+                lookup[(byte >> SHIFT) as usize],
+            ]
+        }
+        let mut lookup = [[0; 2]; 256];
+        for (i, pair) in lookup.iter_mut().enumerate() {
+            *pair = encode(&base_lookup.0, i as u8);
+        }
+        EncodeLookup(lookup)
     }
 }
 

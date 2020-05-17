@@ -14,14 +14,12 @@ impl Codec {
         // is faster than using `extend` on a Vec
         // implementing a custom iterator to use flat_map and next 2 times
         // is slower, and this allows pre-allocating exactly what will be needed
-        stream.iter().map(|&byte| self.matrix.encode(byte)).fold(
-            Vec::with_capacity(stream.len() * 2),
-            |mut encoded, bytes| {
-                encoded.push(bytes[0]);
-                encoded.push(bytes[1]);
-                encoded
-            },
-        )
+        let mut encoded = Vec::with_capacity(stream.len() * 2);
+        for bytes in stream.iter().map(|&byte| self.matrix.encode(byte)) {
+            encoded.push(bytes[0]);
+            encoded.push(bytes[1]);
+        }
+        encoded
     }
 
     pub fn decode(&self, stream: &[u8]) -> Vec<u8> {
@@ -29,7 +27,7 @@ impl Codec {
         // byte into two bytes, hence a file encoded with this program
         // will always have an even number of bytes
         stream
-            .chunks(2)
+            .chunks_exact(2)
             .map(|bytes| self.matrix.decode(bytes[0], bytes[1]))
             .collect()
     }
