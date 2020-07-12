@@ -31,6 +31,25 @@ impl Codec {
             .map(|bytes| self.matrix.decode(bytes[0], bytes[1]))
             .collect()
     }
+
+    pub fn encode_buffered(&self, stream: &[u8], result: &mut [u8]) -> usize {
+        for (i, bytes) in stream
+            .iter()
+            .map(|&byte| self.matrix.encode(byte))
+            .enumerate()
+        {
+            result[i * 2] = bytes[0];
+            result[i * 2 + 1] = bytes[1];
+        }
+        stream.len() * 2
+    }
+
+    pub fn decode_buffered(&self, stream: &[u8], result: &mut [u8]) -> usize {
+        for (i, bytes) in stream.chunks_exact(2).enumerate() {
+            result[i] = self.matrix.decode(bytes[0], bytes[1]);
+        }
+        stream.len() / 2
+    }
 }
 
 impl<T: Into<Matrix>> From<T> for Codec {

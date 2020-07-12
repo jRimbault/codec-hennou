@@ -46,7 +46,7 @@ struct Params {
     buffered: bool,
 }
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 fn main() {
     process::exit(match run(Options::from_args()) {
         Ok(_) => exitcode::OK,
@@ -57,29 +57,20 @@ fn main() {
     })
 }
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 fn run(opts: Options) -> Result<(), Box<dyn std::error::Error>> {
-    fn pick_method<Converter>(params: Params, codec: Converter) -> io::Result<()>
-    where
-        Converter: Fn(&[u8]) -> Vec<u8>,
-        Converter: Send + Sync,
-    {
-        if params.buffered {
-            buffered_codec(params, codec)
-        } else {
-            multithreaded_codec(params, codec)
-        }
-    }
     use Task::*;
     let key = fs::read_to_string(&opts.keyfile)?;
     let codec: Codec = key[5..40].parse::<Matrix>()?.into();
     Ok(match opts.task {
-        Encode(params) => pick_method(params, |bytes| codec.encode(bytes)),
-        Decode(params) => pick_method(params, |bytes| codec.decode(bytes)),
+        Encode(p) if p.buffered => buffered_codec(p, |s, r| codec.encode_buffered(s, r)),
+        Decode(p) if p.buffered => buffered_codec(p, |s, r| codec.decode_buffered(s, r)),
+        Encode(p) => multithreaded_codec(p, |s| codec.encode(s)),
+        Decode(p) => multithreaded_codec(p, |s| codec.decode(s)),
     }?)
 }
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 fn multithreaded_codec<Converter>(params: Params, codec: Converter) -> io::Result<()>
 where
     Converter: Fn(&[u8]) -> Vec<u8>,
@@ -108,21 +99,23 @@ where
     Ok(())
 }
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 fn buffered_codec<Converter>(params: Params, codec: Converter) -> io::Result<()>
 where
-    Converter: Fn(&[u8]) -> Vec<u8>,
+    Converter: Fn(&[u8], &mut [u8]) -> usize,
     Converter: Send + Sync,
 {
     let mut source = BufReader::new(File::open(params.source)?);
     let mut dest = BufWriter::new(File::create(params.dest)?);
+    let mut result_buffer = [0u8; 1024 * 16];
     loop {
         let buffer = source.fill_buf()?;
         let buffer_size = buffer.len();
         if buffer_size == 0 {
             break;
         }
-        dest.write_all(&codec(&buffer))?;
+        let used = codec(&buffer, &mut result_buffer);
+        dest.write_all(&result_buffer[..used])?;
         source.consume(buffer_size);
     }
     Ok(())
