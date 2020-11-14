@@ -78,13 +78,16 @@ mod tests {
         assert_eq!(clear, decoded);
     }
 
-    fn random(n: usize) -> Vec<u8> {
-        const MAX_CHUNK: usize = 32;
-        (0..(n / MAX_CHUNK) + 1)
-            .map(|_| rand::random::<[u8; MAX_CHUNK]>().to_vec())
-            .flatten()
-            .collect::<Vec<u8>>()[..n]
-            .to_vec()
+    fn random_vec<T>(size: usize) -> Vec<T>
+    where
+        rand::distributions::Standard: rand::distributions::Distribution<T>,
+    {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        std::iter::repeat(())
+            .map(|_| rng.gen())
+            .take(size)
+            .collect()
     }
 
     #[rstest(
@@ -94,7 +97,7 @@ mod tests {
         case(524287), // prime number
     )]
     fn should_encode_decode_random(n: usize) {
-        let random_bytes = random(n);
+        let random_bytes = random_vec(n);
         let codec: Codec = [12, 16, 254, 24].into();
         let decoded = codec.decode(&codec.encode(&random_bytes));
         assert_eq!(random_bytes, decoded);
@@ -107,7 +110,7 @@ mod tests {
         case(524287), // prime number
     )]
     fn should_encode_decode_random_using_codec_struct(n: usize) {
-        let random_bytes = random(n);
+        let random_bytes = random_vec(n);
         let codec: Codec = [12, 16, 254, 24].into();
         let encoded = codec.encode(&random_bytes);
         let decoded = codec.decode(&encoded);
