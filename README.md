@@ -1,4 +1,4 @@
-# Projet d'école "encodage"
+# Projet scolaire "encodage"
 
 ![CI](https://github.com/jRimbault/codech/workflows/CI/badge.svg?branch=master)
 [![codecov](https://codecov.io/gh/jRimbault/codech/branch/master/graph/badge.svg)](https://codecov.io/gh/jRimbault/codech)
