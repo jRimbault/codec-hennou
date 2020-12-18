@@ -11,7 +11,7 @@ import time
 DIR = "win10-x64" if os.name == "nt" else "linux-x64"
 EXE = "codech.exe" if os.name == "nt" else "codech"
 WORKDIR = os.path.dirname(__file__)
-BINARY = os.path.join(WORKDIR, "bin", "Release", "netcoreapp3.1", DIR, "publish", EXE)
+BINARY = os.path.join(WORKDIR, "bin", "Release", "netcoreapp5.0", DIR, "publish", EXE)
 KEY = os.path.join(WORKDIR, "key.txt")
 
 

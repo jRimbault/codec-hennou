@@ -19,9 +19,9 @@ namespace codech
             }
         }
 
-        public static Matrix From(string filename)
+        public static Matrix FromFile(string filename)
         {
-            return new Matrix(BuildMatrixFromKey(ReadKey(filename)));
+            return new(BuildMatrixFromKey(ReadKey(filename)));
         }
 
         private static byte[] BuildMatrixFromKey(byte[] key)

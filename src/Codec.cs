@@ -23,7 +23,7 @@ namespace codech
 
         public IEnumerable<byte> Decode(IEnumerable<byte> stream)
         {
-            var couple = new Queue<byte>(2);
+            Queue<byte> couple = new(2);
             foreach (byte b in stream)
             {
                 couple.Enqueue(b);

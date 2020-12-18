@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using CommandLine;
@@ -16,62 +15,33 @@ namespace codech
 
         private static void Run(Options opts)
         {
-            var codec = new Codec(Matrix.From(opts.KeyFile));
+            Codec codec = new(Matrix.FromFile(opts.KeyFile));
             if (opts.Encode)
             {
-                Work(codec.Encode, opts);
+                Work(opts, codec.Encode);
             }
             else if (opts.Decode)
             {
-                Work(codec.Decode, opts);
+                Work(opts, codec.Decode);
             }
         }
 
         private static void Work(
-            Func<IEnumerable<byte>, IEnumerable<byte>> worker,
-            Options opts
+            Options opts,
+            Func<IEnumerable<byte>, IEnumerable<byte>> worker
         )
         {
-            DateTime readStart = DateTime.Now;
-            byte[] content = File.ReadAllBytes(opts.Source);
-            TimeSpan readEnd = DateTime.Now - readStart;
-            DateTime workStart = DateTime.Now;
-            byte[] result = worker(content).ToArray();
-            // byte[] result = content.ToList().Chunk(ChunkSize(content.Length))
-            //                        .AsParallel()
-            //                        .AsOrdered()
-            //                        .SelectMany(c => worker(c))
-            //                        .ToArray();
-            TimeSpan workEnd = DateTime.Now - workStart;
-            DateTime writeStart = DateTime.Now;
-            File.WriteAllBytes(opts.Dest, result);
-            TimeSpan writeEnd = DateTime.Now - writeStart;
-            if (opts.Timings)
+            const int MAX_SIZE = 4096;
+            using (FileStream reader = new(opts.Source, FileMode.Open))
+            using (FileStream writer = new(opts.Dest, FileMode.Create))
             {
-                string[] formattedTimes = new[]
+                var buffer = new byte[MAX_SIZE];
+                while (reader.Read(buffer, 0, buffer.Length) > 0)
                 {
-                    readEnd,
-                    workEnd,
-                    writeEnd
-                }.Select(d => d.TotalSeconds.ToString(CultureInfo.InvariantCulture)).ToArray();
-                Console.WriteLine(string.Join(" ", formattedTimes));
+                    var result = worker(buffer).ToArray();
+                    writer.Write(result, 0, result.Length);
+                }
             }
-        }
-
-        private static int ChunkSize(int len)
-        {
-            if (Environment.ProcessorCount <= 0)
-            {
-                return len;
-            }
-
-            int res = len / Environment.ProcessorCount;
-            if (res % 2 == 1 && res != 1)
-            {
-                return res - 1;
-            }
-
-            return res;
         }
     }
 }
