@@ -6,17 +6,30 @@ namespace codech
 {
     internal class Matrix
     {
-        public byte[] Decode;
-        public byte[] Encode;
+        private const byte MASK = 0x0f;
+        private readonly byte[] decode;
+        private readonly byte[] encode;
 
         private Matrix(byte[] matrix)
         {
-            Encode = matrix;
-            Decode = new byte[256];
+            this.encode = matrix;
+            this.decode = new byte[256];
             for (byte i = 0; i < matrix.Length; i += 1)
             {
-                Decode[matrix[i]] = i;
+                this.decode[matrix[i]] = i;
             }
+        }
+
+        public (byte, byte) Encode(byte b)
+        {
+            return (this.encode[b & MASK], this.encode[(b >> 4) & MASK]);
+        }
+
+        public byte Decode(byte b1, byte b2)
+        {
+            byte p1 = this.decode[b1];
+            byte p2 = (byte)(this.decode[b2] << 4);
+            return (byte)(p1 | p2);
         }
 
         public static Matrix FromFile(string filename)
