@@ -16,14 +16,7 @@ namespace codech
         private static void Run(Options opts)
         {
             Codec codec = new(Matrix.FromFile(opts.KeyFile));
-            if (opts.Encode)
-            {
-                Work(opts, codec.Encode);
-            }
-            else if (opts.Decode)
-            {
-                Work(opts, codec.Decode);
-            }
+            ManualWork(opts, codec.matrix);
         }
 
         private static void Work(
@@ -58,14 +51,40 @@ namespace codech
             using (BufferedStream writer = new(innerRriter))
             {
                 var readBuffer = new byte[MAX_SIZE];
-                var writeBuffer = new byte[opts.Encode ? MAX_SIZE * 2 : MAX_SIZE / 2];
                 while (reader.Read(readBuffer, 0, readBuffer.Length) > 0)
                 {
-                    foreach (var (i, b) in worker(readBuffer).Enumerate())
+                    foreach (var b in worker(readBuffer))
                     {
-                        writeBuffer[i] = b;
+                        writer.WriteByte(b);
                     }
-                    writer.Write(writeBuffer, 0, writeBuffer.Length);
+                }
+            }
+        }
+
+        private static void ManualWork(Options opts, Matrix matrix)
+        {
+            using (FileStream innerReader = new(opts.Source, FileMode.Open))
+            using (FileStream innerRriter = new(opts.Dest, FileMode.Create))
+            using (BufferedStream reader = new(innerReader))
+            using (BufferedStream writer = new(innerRriter))
+            {
+                if (opts.Encode)
+                {
+                    int b;
+                    while ((b = reader.ReadByte()) != -1)
+                    {
+                        var (b1, b2) = matrix.Encode((byte)b);
+                        writer.WriteByte(b1);
+                        writer.WriteByte(b2);
+                    }
+                }
+                else
+                {
+                    int b1, b2;
+                    while (((b1 = reader.ReadByte()) != -1) && (b2 = reader.ReadByte()) != -1)
+                    {
+                        writer.WriteByte(matrix.Decode((byte)b1, (byte)b2));
+                    }
                 }
             }
         }
