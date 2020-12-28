@@ -1,8 +1,10 @@
 .PHONY: build
 
-build:
+build: codech
+
+codech: main.go src/*.go
 	go build
-	strip codech
+	strip $@
 
 bench: build
 	@./bench.sh -f 64 -s

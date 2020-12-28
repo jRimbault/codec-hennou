@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	codech "github.com/jRimbault/codech/src"
+	codech "codech/src"
 )
 
 func main() {
